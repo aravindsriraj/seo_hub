@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import streamlit as st
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple, Any, Optional, Union
 from seo_hub.core.config import config
@@ -383,7 +384,7 @@ class DatabaseOperations:
                 primary_keyword,
                 estimated_word_count
             FROM urls
-            WHERE datePublished >= date('now', '-? days')
+            WHERE datePublished >= date('now', '-' || ? || ' days')
         """, (days,))
         
         data = cursor.fetchall()
@@ -392,7 +393,81 @@ class DatabaseOperations:
     
         conn.close()
         return df
+    # ====================== Get Ranking Changes for Analysis ===================== #
+
+    def get_ranking_changes(self, days: int) -> pd.DataFrame:
+        """Get ranking changes over the specified number of days."""
+        try:
+            conn = self.get_connection(config.RANKINGS_DB_PATH)
+            
+            query = """
+            WITH RankingChanges AS (
+                SELECT 
+                    k.keyword,
+                    r.check_date,
+                    r.position,
+                    r.domain,
+                    r.url,
+                    LAG(r.position) OVER (
+                        PARTITION BY k.keyword, r.domain 
+                        ORDER BY r.check_date
+                    ) as previous_position
+                FROM keywords k
+                JOIN rankings r ON k.id = r.keyword_id
+                WHERE r.check_date >= date('now', '-' || ? || ' days')
+            )
+            SELECT 
+                keyword,
+                check_date,
+                domain,
+                position,
+                previous_position,
+                COALESCE(previous_position, position) - position as position_change
+            FROM RankingChanges
+            WHERE previous_position IS NOT NULL
+            ORDER BY check_date DESC, ABS(position_change) DESC
+            """
+            
+            df = pd.read_sql_query(query, conn, params=(days,))
+            conn.close()
+            return df
+            
+        except Exception as e:
+            st.error(f"Error fetching ranking changes: {str(e)}")
+            return pd.DataFrame() 
         
+    # ==== GET LLM Mention Patterns for Analysis ====    
+
+    def get_llm_mention_patterns(self, days: int) -> pd.DataFrame:
+        """Get LLM mention patterns over the specified number of days."""
+        try:
+            conn = self.get_connection(config.AIMODELS_DB_PATH)
+            
+            # Get all answer columns
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(keyword_rankings)")
+            columns = [info[1] for info in cursor.fetchall()]
+            answer_columns = [col for col in columns if col.endswith('_answer')]
+            
+            # Create SELECT clause for all answer columns
+            select_parts = ["check_date", "keyword"] + answer_columns
+            
+            query = f"""
+            SELECT {', '.join(select_parts)}
+            FROM keyword_rankings
+            WHERE check_date >= date('now', '-' || ? || ' days')
+            ORDER BY check_date DESC
+            """
+            
+            df = pd.read_sql_query(query, conn, params=(days,))
+            conn.close()
+            return df
+            
+        except Exception as e:
+            st.error(f"Error fetching LLM mention patterns: {str(e)}")
+            print(f"Detailed error: {str(e)}")  # Debug info
+            return pd.DataFrame()
+
     # ====================== Database Maintenance Operations ======================
     def get_column_names(self, table: str, database: str) -> List[str]:
         """Get column names for a specified table."""

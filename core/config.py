@@ -34,7 +34,10 @@ class Config:
 
     def setup_gemini_api(self):
         """Configure Gemini API with appropriate settings."""
-        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+        self.GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "Not configured")
+        self.GEMINI_MODEL_NAME = "gemini-1.5-flash"
+        
+        genai.configure(api_key=self.GEMINI_API_KEY)
         
         self.GENERATION_CONFIG = {
             "temperature": 1,
@@ -45,7 +48,7 @@ class Config:
         }
         
         self.gemini_model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name=self.GEMINI_MODEL_NAME,
             generation_config=self.GENERATION_CONFIG,
         )
 

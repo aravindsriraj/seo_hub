@@ -20,7 +20,18 @@ def setup_sidebar():
     """Configure and render the sidebar."""
     with st.sidebar:
         st.header("Controls")
-        
+
+        # Model Information
+   
+        with st.expander("Model Information", expanded=True):
+            api_key = config.GEMINI_API_KEY
+            masked_key = "****" + api_key[-4:] if api_key != "Not configured" else "Not configured"
+            
+            st.info(
+                f"**Current Model:** {config.GEMINI_MODEL_NAME}\n\n"
+                f"**API Key:** {masked_key}"
+            )
+
         # Analysis Controls
         with st.expander("Analysis Controls", expanded=True):
             if st.button("Reset Analysis"):
