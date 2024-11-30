@@ -1,0 +1,86 @@
+Timestamp: 2024-11-30 08:48:44
+Model: Claude 3.5 Haiku
+Keyword: collibra alternatives
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936718-ujOGtNqzZaow7pPFYcuj",
+  "provider": "Anthropic",
+  "model": "anthropic/claude-3.5-haiku-20241022",
+  "object": "chat.completion",
+  "created": 1732936718,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "end_turn",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here are some alternatives to Collibra for data governance and data catalog solutions:\n\n1. Enterprise-Level Solutions\n- Alation\n- Informatica Intelligent Data Platform\n- IBM Watson Knowledge Catalog\n- Talend Data Governance\n- Precisely Data Marketplace\n- ASG Enterprise Data Intelligence\n\n2. Open-Source Options\n- Apache Atlas\n- Apache Ranger\n- Amundsen\n- DataHub\n- OpenMetadata\n\n3. Cloud-Native Solutions\n- Microsoft Purview\n- AWS Glue Data Catalog\n- Google Cloud Data Catalog\n- Databricks Unity Catalog\n\n4. Mid-Market Solutions\n- Privacera\n- Atlan\n- Zeenea\n- eureka data\n- Octopai\n\n5. Specialized Data Governance Tools\n- erwin Data Intelligence\n- data.world\n- Informatica\n- Precisely\n\nComparison Factors:\n- Pricing\n- Scalability\n- Integration capabilities\n- Metadata management\n- Data lineage\n- Compliance features\n- User interface\n- Machine learning capabilities\n\nKey Considerations:\n- Organizational size\n- Technical complexity\n- Budget\n- Specific industry requirements\n- Existing technology stack\n\nRecommendation: Evaluate multiple solutions through trials and demos to find the best fit for your specific needs.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 11,
+    "completion_tokens": 300,
+    "total_tokens": 311
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here are some alternatives to Collibra for data governance and data catalog solutions:
+
+1. Enterprise-Level Solutions
+- Alation
+- Informatica Intelligent Data Platform
+- IBM Watson Knowledge Catalog
+- Talend Data Governance
+- Precisely Data Marketplace
+- ASG Enterprise Data Intelligence
+
+2. Open-Source Options
+- Apache Atlas
+- Apache Ranger
+- Amundsen
+- DataHub
+- OpenMetadata
+
+3. Cloud-Native Solutions
+- Microsoft Purview
+- AWS Glue Data Catalog
+- Google Cloud Data Catalog
+- Databricks Unity Catalog
+
+4. Mid-Market Solutions
+- Privacera
+- Atlan
+- Zeenea
+- eureka data
+- Octopai
+
+5. Specialized Data Governance Tools
+- erwin Data Intelligence
+- data.world
+- Informatica
+- Precisely
+
+Comparison Factors:
+- Pricing
+- Scalability
+- Integration capabilities
+- Metadata management
+- Data lineage
+- Compliance features
+- User interface
+- Machine learning capabilities
+
+Key Considerations:
+- Organizational size
+- Technical complexity
+- Budget
+- Specific industry requirements
+- Existing technology stack
+
+Recommendation: Evaluate multiple solutions through trials and demos to find the best fit for your specific needs.

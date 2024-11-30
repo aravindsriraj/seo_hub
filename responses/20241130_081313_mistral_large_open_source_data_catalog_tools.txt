@@ -1,0 +1,70 @@
+Timestamp: 2024-11-30 08:13:13
+Model: Mistral Large
+Keyword: open source data catalog tools
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732934579-7YbVeS8PD7bXlYdwMVkz",
+  "provider": "Mistral",
+  "model": "mistralai/mistral-large-2411",
+  "object": "chat.completion",
+  "created": 1732934579,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "There are several open-source data catalog tools available that can help organizations manage and discover their data assets effectively. Here are some notable ones:\n\n1. **Apache Atlas**:\n   - **Description**: Apache Atlas is a data governance and metadata management framework designed to help organizations manage and discover their data assets.\n   - **Features**: Data classification, data discovery, lineage tracking, and integration with various data sources.\n   - **Website**: [Apache Atlas](https://atlas.apache.org/)\n\n2. **Amundsen by Lyft**:\n   - **Description**: Amundsen is a data discovery and metadata engine for improving the productivity of data analysts, data scientists, and software engineers when interacting with data.\n   - **Features**: Metadata management, data lineage, data discovery, and integration with various tools.\n   - **Website**: [Amundsen](https://www.amundsen.io/)\n\n3. **DataHub by LinkedIn**:\n   - **Description**: DataHub is a metadata catalog that enables data discovery, data documentation, and data lineage.\n   - **Features**: Data discovery, data lineage, metadata management, and data documentation.\n   - **Website**: [DataHub](https://datahubproject.io/)\n\n4. **odc-meta** (Open Data Crawler - Meta)**:\n   - **Description**: odc-meta is a set of tools to build a metadata catalog, part of the Open Data Catalog project.\n   - **Features**: Automated metadata extraction, catalog building, and integration with various data sources.\n   - **Website**: [odc-meta](https://github.com/odc-project/odc-meta)\n\n5. **CKAN**:\n   - **Description**: CKAN is a powerful open-source data management system that makes data accessible \u2013 by providing tools to streamline publishing, sharing, finding, and using data.\n   - **Features**: Data portal, data catalog, data discovery, and metadata management.\n   - **Website**: [CKAN](https://ckan.org/)\n\n6. **Magnitude**:\n   - **Description**: Magnitude is an open-source metadata catalog that aims to support CI/CD, data lineage, data quality, and data monitoring.\n   - **Features**: Data lineage, data quality, data monitoring, and integration with CI/CD pipelines.\n   - **Website**: [Magnitude](https://magnitude.io/)\n\n7. **OpenMetadata**:\n   - **Description**: OpenMetadata is a comprehensive open-source metadata management and data discovery platform designed to help organizations manage their data assets.\n   - **Features**: Data discovery, data lineage, metadata management, data governance, and integration with various data sources.\n   - **Website**: [OpenMetadata](https://open-metadata.org/)\n\nThese tools offer a range of features to help with data discovery, data governance, and metadata management, making them valuable for organizations looking to improve their data management practices. Each tool has its own strengths and use cases, so the choice of tool will depend on the specific needs and requirements of the organization.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 8,
+    "completion_tokens": 701,
+    "total_tokens": 709
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+There are several open-source data catalog tools available that can help organizations manage and discover their data assets effectively. Here are some notable ones:
+
+1. **Apache Atlas**:
+   - **Description**: Apache Atlas is a data governance and metadata management framework designed to help organizations manage and discover their data assets.
+   - **Features**: Data classification, data discovery, lineage tracking, and integration with various data sources.
+   - **Website**: [Apache Atlas](https://atlas.apache.org/)
+
+2. **Amundsen by Lyft**:
+   - **Description**: Amundsen is a data discovery and metadata engine for improving the productivity of data analysts, data scientists, and software engineers when interacting with data.
+   - **Features**: Metadata management, data lineage, data discovery, and integration with various tools.
+   - **Website**: [Amundsen](https://www.amundsen.io/)
+
+3. **DataHub by LinkedIn**:
+   - **Description**: DataHub is a metadata catalog that enables data discovery, data documentation, and data lineage.
+   - **Features**: Data discovery, data lineage, metadata management, and data documentation.
+   - **Website**: [DataHub](https://datahubproject.io/)
+
+4. **odc-meta** (Open Data Crawler - Meta)**:
+   - **Description**: odc-meta is a set of tools to build a metadata catalog, part of the Open Data Catalog project.
+   - **Features**: Automated metadata extraction, catalog building, and integration with various data sources.
+   - **Website**: [odc-meta](https://github.com/odc-project/odc-meta)
+
+5. **CKAN**:
+   - **Description**: CKAN is a powerful open-source data management system that makes data accessible – by providing tools to streamline publishing, sharing, finding, and using data.
+   - **Features**: Data portal, data catalog, data discovery, and metadata management.
+   - **Website**: [CKAN](https://ckan.org/)
+
+6. **Magnitude**:
+   - **Description**: Magnitude is an open-source metadata catalog that aims to support CI/CD, data lineage, data quality, and data monitoring.
+   - **Features**: Data lineage, data quality, data monitoring, and integration with CI/CD pipelines.
+   - **Website**: [Magnitude](https://magnitude.io/)
+
+7. **OpenMetadata**:
+   - **Description**: OpenMetadata is a comprehensive open-source metadata management and data discovery platform designed to help organizations manage their data assets.
+   - **Features**: Data discovery, data lineage, metadata management, data governance, and integration with various data sources.
+   - **Website**: [OpenMetadata](https://open-metadata.org/)
+
+These tools offer a range of features to help with data discovery, data governance, and metadata management, making them valuable for organizations looking to improve their data management practices. Each tool has its own strengths and use cases, so the choice of tool will depend on the specific needs and requirements of the organization.

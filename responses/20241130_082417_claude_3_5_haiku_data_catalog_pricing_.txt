@@ -1,0 +1,82 @@
+Timestamp: 2024-11-30 08:24:17
+Model: Claude 3.5 Haiku
+Keyword: data catalog pricing 
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732935250-7y668ysNS1iLMbLEd8mf",
+  "provider": "Anthropic",
+  "model": "anthropic/claude-3.5-haiku-20241022",
+  "object": "chat.completion",
+  "created": 1732935250,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "end_turn",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here's an overview of data catalog pricing approaches:\n\n1. Pricing Models:\n- Per-user pricing\n- Per-data source pricing\n- Tiered subscription plans\n- Enterprise licensing\n- Usage-based pricing\n\n2. Major Vendors Pricing (approximate):\na) Alation\n- Custom pricing\n- Enterprise-level solutions\n- Contact sales for specific quotes\n\nb) Collibra\n- Tiered pricing\n- Enterprise and mid-market options\n- Custom implementation costs\n\nc) AWS Glue Data Catalog\n- Pay per request\n- Storage-based pricing\n- Integrated with AWS services\n\nd) Informatica Enterprise Data Catalog\n- Annual subscription\n- Per-user or enterprise licensing\n- Varies based on deployment scale\n\n3. Typical Price Ranges:\n- Small business: $500-$5,000/month\n- Mid-market: $5,000-$20,000/month\n- Enterprise: $20,000-$100,000+/year\n\n4. Pricing Factors:\n- Number of users\n- Data sources\n- Features needed\n- Deployment complexity\n- Support level\n\n5. Considerations:\n- Implementation costs\n- Training expenses\n- Integration requirements\n- Scalability\n- Customization needs\n\nRecommendation: Request detailed quotes from vendors for accurate pricing.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 10,
+    "completion_tokens": 297,
+    "total_tokens": 307
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here's an overview of data catalog pricing approaches:
+
+1. Pricing Models:
+- Per-user pricing
+- Per-data source pricing
+- Tiered subscription plans
+- Enterprise licensing
+- Usage-based pricing
+
+2. Major Vendors Pricing (approximate):
+a) Alation
+- Custom pricing
+- Enterprise-level solutions
+- Contact sales for specific quotes
+
+b) Collibra
+- Tiered pricing
+- Enterprise and mid-market options
+- Custom implementation costs
+
+c) AWS Glue Data Catalog
+- Pay per request
+- Storage-based pricing
+- Integrated with AWS services
+
+d) Informatica Enterprise Data Catalog
+- Annual subscription
+- Per-user or enterprise licensing
+- Varies based on deployment scale
+
+3. Typical Price Ranges:
+- Small business: $500-$5,000/month
+- Mid-market: $5,000-$20,000/month
+- Enterprise: $20,000-$100,000+/year
+
+4. Pricing Factors:
+- Number of users
+- Data sources
+- Features needed
+- Deployment complexity
+- Support level
+
+5. Considerations:
+- Implementation costs
+- Training expenses
+- Integration requirements
+- Scalability
+- Customization needs
+
+Recommendation: Request detailed quotes from vendors for accurate pricing.

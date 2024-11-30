@@ -1,0 +1,55 @@
+Timestamp: 2024-11-30 08:47:38
+Model: Mistral Nemo
+Keyword: alation alternatives
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936646-To13lv8KjIaCxbIxa4xD",
+  "provider": "DeepInfra",
+  "model": "mistralai/mistral-nemo",
+  "object": "chat.completion",
+  "created": 1732936646,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here are some alternatives to Alation, a data catalog and governance platform, along with a brief description of each:\n\n1. **Atlan**: A collaboration platform that builds a data culture while ensuring data quality, security, and governance. It offers features like data discovery, data quality, and data governance.\n\n2. **Collibra**: A data governance platform that helps organizations connect, understand, and trust data. It offers data cataloging, data quality, data lineage, and data governance features.\n\n3. **Erwin**: A data governance and data management platform that offers data cataloging, data modeling, data lineage, and data integration capabilities.\n\n4. **Talend**: A data integration and data quality company that offers a data catalog as part of its platform. It also provides data integration, data replication, and data quality features.\n\n5. **Tigergraph**: A graph analytics platform that offers a data catalog, along with data integration, data governance, and graph analytics capabilities.\n\n6. **Astr\u00efd**: An open-source data catalog that enables data discovery, data governance, and data lineage. It is built on top of Apache Atlas.\n\n7. **Datahub**: An open-source project by LinkedIn that enables data discovery, data governance, and data lineage. It is built on top of Apache Atlas and provides a user-friendly interface.\n\n8. **Clowder**: An open-source data catalog by NASA that enables data discovery, data management, and data sharing. It is built on top of Apache Solr and ApacheStorm.\n\n9. ** \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u044f**: (literally \"Enterprise\") is a commercial data catalog and metadata management solution by SAP. It helps organizations to organize, describing, discover and share data and metadata.\n\n10. **SplunkEnterprise**: An IT service intelligence platform that offers data cataloging, data analytics, and data visualization capabilities.\n\nEach of these alternatives has its unique features and strengths, so the best fit for your organization will depend on your specific requirements and use cases.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 8,
+    "completion_tokens": 405,
+    "total_tokens": 413
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here are some alternatives to Alation, a data catalog and governance platform, along with a brief description of each:
+
+1. **Atlan**: A collaboration platform that builds a data culture while ensuring data quality, security, and governance. It offers features like data discovery, data quality, and data governance.
+
+2. **Collibra**: A data governance platform that helps organizations connect, understand, and trust data. It offers data cataloging, data quality, data lineage, and data governance features.
+
+3. **Erwin**: A data governance and data management platform that offers data cataloging, data modeling, data lineage, and data integration capabilities.
+
+4. **Talend**: A data integration and data quality company that offers a data catalog as part of its platform. It also provides data integration, data replication, and data quality features.
+
+5. **Tigergraph**: A graph analytics platform that offers a data catalog, along with data integration, data governance, and graph analytics capabilities.
+
+6. **Astrïd**: An open-source data catalog that enables data discovery, data governance, and data lineage. It is built on top of Apache Atlas.
+
+7. **Datahub**: An open-source project by LinkedIn that enables data discovery, data governance, and data lineage. It is built on top of Apache Atlas and provides a user-friendly interface.
+
+8. **Clowder**: An open-source data catalog by NASA that enables data discovery, data management, and data sharing. It is built on top of Apache Solr and ApacheStorm.
+
+9. ** предприятия**: (literally "Enterprise") is a commercial data catalog and metadata management solution by SAP. It helps organizations to organize, describing, discover and share data and metadata.
+
+10. **SplunkEnterprise**: An IT service intelligence platform that offers data cataloging, data analytics, and data visualization capabilities.
+
+Each of these alternatives has its unique features and strengths, so the best fit for your organization will depend on your specific requirements and use cases.

@@ -1,0 +1,58 @@
+Timestamp: 2024-11-30 08:42:27
+Model: Llama 3.1 70B Instruct
+Keyword: alation pricing
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936325-E68179jOYVWU5KGw7GLZ",
+  "provider": "Hyperbolic",
+  "model": "meta-llama/llama-3.1-70b-instruct",
+  "object": "chat.completion",
+  "created": 1732936325,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Alation is a data catalog platform that provides a comprehensive and automated data management solution. Pricing for Alation varies depending on several factors, such as the size of the organization, the number of users, and the specific features required.\n\nHere is a general overview of Alation's pricing tiers:\n\n**Alation Pricing Tiers:**\n\n1. **Alation Community**: This is a free version of Alation that is suitable for small teams and individuals. It offers limited features, including data discovery, search, and basic data curation.\n2. **Alation Team**: This tier is designed for small to medium-sized teams and offers more advanced features, including data governance, data quality, and collaboration. The cost of Alation Team is around $5,000 - $10,000 per year, depending on the number of users.\n3. **Alation Enterprise**: This tier is designed for large enterprises and offers advanced features, including data integration, data security, and scalability. The cost of Alation Enterprise is around $50,000 - $100,000 per year, depending on the number of users and features required.\n4. **Alation Enterprise Plus**: This is the most advanced tier, offering additional features such as data warehousing, data lakes, and advanced analytics. The cost of Alation Enterprise Plus is around $100,000 - $200,000 per year, depending on the number of users and features required.\n\n**Additional Costs:**\n\n* **Support and maintenance**: Alation offers various support and maintenance plans, including standard, premium, and enterprise support. These plans can add an additional 10% to 20% to the overall cost of the platform.\n* **Customization and implementation**: Alation offers customization and implementation services to help customers set up and configure the platform. These services can add an additional 10% to 50% to the overall cost of the platform.\n* **Add-ons and integrations**: Alation offers various add-ons and integrations, such as data quality and data governance modules, which can add an additional $5,000 to $50,000 per year to the overall cost of the platform.\n\n**Discounts:**\n\n* **Volume discounts**: Alation offers discounts for large-scale deployments, which can reduce the cost per user.\n* **Committed usage**: Alation offers discounts for customers who commit to using the platform for a certain number of users or for a specific period of time.\n* **Non-profit and education**: Alation offers discounts for non-profit organizations and educational institutions.\n\n**Pricing Model:**\n\nAlation uses a subscription-based pricing model, where customers pay an annual fee based on the number of users, features, and support required. The platform is typically priced per user, with discounts available for large-scale deployments and committed usage.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2,
+    "completion_tokens": 566,
+    "total_tokens": 568
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Alation is a data catalog platform that provides a comprehensive and automated data management solution. Pricing for Alation varies depending on several factors, such as the size of the organization, the number of users, and the specific features required.
+
+Here is a general overview of Alation's pricing tiers:
+
+**Alation Pricing Tiers:**
+
+1. **Alation Community**: This is a free version of Alation that is suitable for small teams and individuals. It offers limited features, including data discovery, search, and basic data curation.
+2. **Alation Team**: This tier is designed for small to medium-sized teams and offers more advanced features, including data governance, data quality, and collaboration. The cost of Alation Team is around $5,000 - $10,000 per year, depending on the number of users.
+3. **Alation Enterprise**: This tier is designed for large enterprises and offers advanced features, including data integration, data security, and scalability. The cost of Alation Enterprise is around $50,000 - $100,000 per year, depending on the number of users and features required.
+4. **Alation Enterprise Plus**: This is the most advanced tier, offering additional features such as data warehousing, data lakes, and advanced analytics. The cost of Alation Enterprise Plus is around $100,000 - $200,000 per year, depending on the number of users and features required.
+
+**Additional Costs:**
+
+* **Support and maintenance**: Alation offers various support and maintenance plans, including standard, premium, and enterprise support. These plans can add an additional 10% to 20% to the overall cost of the platform.
+* **Customization and implementation**: Alation offers customization and implementation services to help customers set up and configure the platform. These services can add an additional 10% to 50% to the overall cost of the platform.
+* **Add-ons and integrations**: Alation offers various add-ons and integrations, such as data quality and data governance modules, which can add an additional $5,000 to $50,000 per year to the overall cost of the platform.
+
+**Discounts:**
+
+* **Volume discounts**: Alation offers discounts for large-scale deployments, which can reduce the cost per user.
+* **Committed usage**: Alation offers discounts for customers who commit to using the platform for a certain number of users or for a specific period of time.
+* **Non-profit and education**: Alation offers discounts for non-profit organizations and educational institutions.
+
+**Pricing Model:**
+
+Alation uses a subscription-based pricing model, where customers pay an annual fee based on the number of users, features, and support required. The platform is typically priced per user, with discounts available for large-scale deployments and committed usage.

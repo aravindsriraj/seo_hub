@@ -1,0 +1,63 @@
+Timestamp: 2024-11-30 08:24:48
+Model: Llama 3.1 8B Instruct
+Keyword: data catalog pricing 
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732935279-x1i1NM5wblJKVIFrKsX8",
+  "provider": "Novita",
+  "model": "meta-llama/llama-3.1-8b-instruct",
+  "object": "chat.completion",
+  "created": 1732935279,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here are some general pricing models for data catalogs, which may vary depending on the vendor, features, and industry:\n\n1. **Subscription-based models**:\n\t* Basic plans: $50-$100 per month (or $500-$1,000 per year) for a limited set of features and data access.\n\t* Premium plans: $100-$500 per month (or $1,000-$5,000 per year) for additional features, data access, and support.\n2. **Per-data-point pricing**:\n\t* Flat rate per data point (e.g., $0.01-$0.10 per record) or per GB (e.g., $10-$50 per GB).\n3. **Tiered pricing**:\n\t* Starter (limited data access): $50-$200 per month.\n\t* Professional (standard data access): $200-$500 per month.\n\t* Enterprise (advanced data access and support): $500-$1,500 per month.\n4. **Custom pricing**:\n\t* Negotiable based on specific business requirements, data volume, and usage.\n5. **One-time fees**:\n\t* Data ingestion fees (e.g., $500-$5,000 per project).\n\t* Data migration fees (e.g., $1,000-$10,000 per project).\n6. **Storage-based pricing**:\n\t* Per GB storage (e.g., $10-$50 per GB per month).\n7. **Scalable pricing**:\n\t* Pay-as-you-go or usage-based pricing, where costs are calculated based on actual data consumption.\n\nSome popular data catalog vendors and their pricing:\n\n1. **Alation**: Offers a free trial and customizable pricing based on data volume and usage.\n2. **Collibra**: Starts at $20-$50 per user per month (billed annually) for basic plans, with custom pricing for larger enterprises.\n3. **Datometry**: Offers a free trial and customizable pricing based on data complexity and performance requirements.\n4. **MANTA**: Charges $1-$5 per GB of data per month, depending on the type of data and usage.\n5. **Fivetran**: Offers a free trial and starts at $750 ($125 per month) for the premium plan, with custom pricing for larger enterprises.\n6. **Informatica**: Prices vary widely depending on the specific product and features, with some solutions starting at $5,000-$50,000 per node.\n\nKeep in mind that prices may not be up-to-date or publicly disclosed by all vendors, and actual pricing may differ based on specific use cases, contract terms, and negotiations.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here are some general pricing models for data catalogs, which may vary depending on the vendor, features, and industry:
+
+1. **Subscription-based models**:
+	* Basic plans: $50-$100 per month (or $500-$1,000 per year) for a limited set of features and data access.
+	* Premium plans: $100-$500 per month (or $1,000-$5,000 per year) for additional features, data access, and support.
+2. **Per-data-point pricing**:
+	* Flat rate per data point (e.g., $0.01-$0.10 per record) or per GB (e.g., $10-$50 per GB).
+3. **Tiered pricing**:
+	* Starter (limited data access): $50-$200 per month.
+	* Professional (standard data access): $200-$500 per month.
+	* Enterprise (advanced data access and support): $500-$1,500 per month.
+4. **Custom pricing**:
+	* Negotiable based on specific business requirements, data volume, and usage.
+5. **One-time fees**:
+	* Data ingestion fees (e.g., $500-$5,000 per project).
+	* Data migration fees (e.g., $1,000-$10,000 per project).
+6. **Storage-based pricing**:
+	* Per GB storage (e.g., $10-$50 per GB per month).
+7. **Scalable pricing**:
+	* Pay-as-you-go or usage-based pricing, where costs are calculated based on actual data consumption.
+
+Some popular data catalog vendors and their pricing:
+
+1. **Alation**: Offers a free trial and customizable pricing based on data volume and usage.
+2. **Collibra**: Starts at $20-$50 per user per month (billed annually) for basic plans, with custom pricing for larger enterprises.
+3. **Datometry**: Offers a free trial and customizable pricing based on data complexity and performance requirements.
+4. **MANTA**: Charges $1-$5 per GB of data per month, depending on the type of data and usage.
+5. **Fivetran**: Offers a free trial and starts at $750 ($125 per month) for the premium plan, with custom pricing for larger enterprises.
+6. **Informatica**: Prices vary widely depending on the specific product and features, with some solutions starting at $5,000-$50,000 per node.
+
+Keep in mind that prices may not be up-to-date or publicly disclosed by all vendors, and actual pricing may differ based on specific use cases, contract terms, and negotiations.

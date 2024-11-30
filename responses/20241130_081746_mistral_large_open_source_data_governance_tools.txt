@@ -1,0 +1,70 @@
+Timestamp: 2024-11-30 08:17:46
+Model: Mistral Large
+Keyword: open source data governance tools
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732934851-z143kMBVkIe8dUxARw31",
+  "provider": "Mistral",
+  "model": "mistralai/mistral-large-2411",
+  "object": "chat.completion",
+  "created": 1732934851,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "There are several open-source data governance tools available that can help organizations manage, monitor, and comply with data policies. Here are some popular ones:\n\n1. **Apache Atlas**:\n   - **Overview**: Apache Atlas is a scalable and extensible set of core foundational governance services \u2013 enabling enterprises to effectively and efficiently meet their compliance requirements within Hadoop and allows integration with the whole enterprise data ecosystem.\n   - **Features**: Metadata management, data lineage, search, and security.\n   - **Website**: [Apache Atlas](https://atlas.apache.org/)\n\n2. **Ermrest**:\n   - **Overview**: Ermrest is a framework for building complex, stable schema models and managing their state in applications, software packages, and databases. It includes tools for managing, auditing, and presenting very large metadata repositories.\n   - **Features**: End-to-end data governance, data access control, and schema management.\n   - **Website**: [Ermrest](https://github.com/informatics-isi-edu/ermrest)\n\n3. **OpenLineage**:\n   - **Overview**: OpenLineage is a standard for metadata and lineage collection designed to instrument jobs from different processing runtimes and interoperate between them.\n   - **Features**: Data lineage, metadata management, and compatibility with various data processing frameworks.\n   - **Website**: [OpenLineage](https://openlineage.io/)\n\n4. **Metacat**:\n   - **Overview**: Metacat is an open-source metadata catalog and governance service to make data discoverable and manageable.\n   - **Features**: Metadata catalog, data discovery, and management of complex data ecosystems.\n   - **Website**: [Metacat](https://metacat.io/)\n\n5. **DataHub**:\n   - **Overview**: DataHub is an extensible metadata search and discovery tool. Initially developed by LinkedIn, it has been open-sourced to benefit the broader data community.\n   - **Features**: Metadata search and discovery, data lineage, and integrations with various data sources.\n   - **Website**: [DataHub](https://datahubproject.io/)\n\n6. **Marquez**:\n   - **Overview**: Marquez is an open-source metadata service for the collection, aggregation, and visualization of a data ecosystem's metadata.\n   - **Features**: Metadata collection, data lineage, and integration with various data processing tools.\n   - **Website**: [Marquez](https://marquezproject.github.io/marquez/)\n\n7. **Prefix**:\n   - **Overview**: Prefix is an open-source software designed to simplify data quality governance. It provides tools for data profiling and quality monitoring.\n   - **Features**: Data profiling, data quality rules, and continuous monitoring.\n   - **Website**: [Prefix](https://github.com/StatCan/prefix)\n\nThese tools offer a range of features that can be tailored to fit the specific needs of different organizations. They can be integrated with various data sources and platforms to ensure comprehensive data governance.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 9,
+    "completion_tokens": 718,
+    "total_tokens": 727
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+There are several open-source data governance tools available that can help organizations manage, monitor, and comply with data policies. Here are some popular ones:
+
+1. **Apache Atlas**:
+   - **Overview**: Apache Atlas is a scalable and extensible set of core foundational governance services – enabling enterprises to effectively and efficiently meet their compliance requirements within Hadoop and allows integration with the whole enterprise data ecosystem.
+   - **Features**: Metadata management, data lineage, search, and security.
+   - **Website**: [Apache Atlas](https://atlas.apache.org/)
+
+2. **Ermrest**:
+   - **Overview**: Ermrest is a framework for building complex, stable schema models and managing their state in applications, software packages, and databases. It includes tools for managing, auditing, and presenting very large metadata repositories.
+   - **Features**: End-to-end data governance, data access control, and schema management.
+   - **Website**: [Ermrest](https://github.com/informatics-isi-edu/ermrest)
+
+3. **OpenLineage**:
+   - **Overview**: OpenLineage is a standard for metadata and lineage collection designed to instrument jobs from different processing runtimes and interoperate between them.
+   - **Features**: Data lineage, metadata management, and compatibility with various data processing frameworks.
+   - **Website**: [OpenLineage](https://openlineage.io/)
+
+4. **Metacat**:
+   - **Overview**: Metacat is an open-source metadata catalog and governance service to make data discoverable and manageable.
+   - **Features**: Metadata catalog, data discovery, and management of complex data ecosystems.
+   - **Website**: [Metacat](https://metacat.io/)
+
+5. **DataHub**:
+   - **Overview**: DataHub is an extensible metadata search and discovery tool. Initially developed by LinkedIn, it has been open-sourced to benefit the broader data community.
+   - **Features**: Metadata search and discovery, data lineage, and integrations with various data sources.
+   - **Website**: [DataHub](https://datahubproject.io/)
+
+6. **Marquez**:
+   - **Overview**: Marquez is an open-source metadata service for the collection, aggregation, and visualization of a data ecosystem's metadata.
+   - **Features**: Metadata collection, data lineage, and integration with various data processing tools.
+   - **Website**: [Marquez](https://marquezproject.github.io/marquez/)
+
+7. **Prefix**:
+   - **Overview**: Prefix is an open-source software designed to simplify data quality governance. It provides tools for data profiling and quality monitoring.
+   - **Features**: Data profiling, data quality rules, and continuous monitoring.
+   - **Website**: [Prefix](https://github.com/StatCan/prefix)
+
+These tools offer a range of features that can be tailored to fit the specific needs of different organizations. They can be integrated with various data sources and platforms to ensure comprehensive data governance.

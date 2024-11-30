@@ -1,0 +1,42 @@
+Timestamp: 2024-11-30 08:56:11
+Model: Claude 3.5 Haiku
+Keyword: data tagging and classification for snowflake 
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732937170-devGCHHYRuOX0n91IJ9O",
+  "provider": "Anthropic",
+  "model": "anthropic/claude-3.5-haiku-20241022",
+  "object": "chat.completion",
+  "created": 1732937170,
+  "choices": [
+    {
+      "error": {
+        "message": "Overloaded",
+        "code": 502,
+        "metadata": {
+          "provider_name": "Anthropic",
+          "raw": {
+            "type": "overloaded_error",
+            "message": "Overloaded"
+          }
+        }
+      },
+      "logprobs": null,
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 0,
+    "total_tokens": 15
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:

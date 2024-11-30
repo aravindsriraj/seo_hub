@@ -1,0 +1,89 @@
+Timestamp: 2024-11-30 08:12:20
+Model: Claude 3.5 Haiku
+Keyword: open source data catalog tools
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732934532-SkxcfARHo9K80XetVbzj",
+  "provider": "Anthropic",
+  "model": "anthropic/claude-3.5-haiku-20241022",
+  "object": "chat.completion",
+  "created": 1732934532,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "end_turn",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here are several open-source data catalog tools:\n\n1. Apache Atlas\n- Enterprise-level data governance\n- Metadata management\n- Hadoop ecosystem integration\n- Strong lineage tracking\n- Apache 2.0 licensed\n\n2. DataHub (by LinkedIn)\n- Modern metadata management platform\n- GraphQL-based API\n- Rich metadata modeling\n- Supports multiple data sources\n- Open-source (Apache 2.0)\n\n3. Amundsen (by Lyft)\n- Machine learning-powered discovery\n- Search and metadata management\n- Integrates with various data sources\n- Powered by Apache\n- User-friendly interface\n\n4. OpenMetadata\n- Comprehensive metadata management\n- Metadata ingestion\n- Search capabilities\n- Data quality monitoring\n- Open-source platform\n\n5. Apache Drill\n- SQL query engine\n- Schema discovery\n- Metadata exploration\n- Big data integration\n- Flexible data source support\n\n6. Egeria\n- Enterprise metadata management\n- Multi-platform compatibility\n- Open metadata standards\n- Governance capabilities\n- Cloud-native architecture\n\n7. Marquez\n- Metadata collection\n- Data lineage tracking\n- OpenLineage standard\n- Cloud-native\n- Workflow metadata management\n\nConsiderations when choosing:\n- Scalability requirements\n- Integration needs\n- Technical complexity\n- Community support\n- Performance characteristics",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 307,
+    "total_tokens": 319
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here are several open-source data catalog tools:
+
+1. Apache Atlas
+- Enterprise-level data governance
+- Metadata management
+- Hadoop ecosystem integration
+- Strong lineage tracking
+- Apache 2.0 licensed
+
+2. DataHub (by LinkedIn)
+- Modern metadata management platform
+- GraphQL-based API
+- Rich metadata modeling
+- Supports multiple data sources
+- Open-source (Apache 2.0)
+
+3. Amundsen (by Lyft)
+- Machine learning-powered discovery
+- Search and metadata management
+- Integrates with various data sources
+- Powered by Apache
+- User-friendly interface
+
+4. OpenMetadata
+- Comprehensive metadata management
+- Metadata ingestion
+- Search capabilities
+- Data quality monitoring
+- Open-source platform
+
+5. Apache Drill
+- SQL query engine
+- Schema discovery
+- Metadata exploration
+- Big data integration
+- Flexible data source support
+
+6. Egeria
+- Enterprise metadata management
+- Multi-platform compatibility
+- Open metadata standards
+- Governance capabilities
+- Cloud-native architecture
+
+7. Marquez
+- Metadata collection
+- Data lineage tracking
+- OpenLineage standard
+- Cloud-native
+- Workflow metadata management
+
+Considerations when choosing:
+- Scalability requirements
+- Integration needs
+- Technical complexity
+- Community support
+- Performance characteristics

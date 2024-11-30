@@ -1,0 +1,62 @@
+Timestamp: 2024-11-30 08:43:17
+Model: Perplexity: Llama 3.1 Sonar 70B Online
+Keyword: alation pricing
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936388-aatFZq3iJLSEvqhXSV5i",
+  "provider": "Perplexity",
+  "model": "perplexity/llama-3.1-sonar-large-128k-online",
+  "object": "chat.completion",
+  "created": 1732936388,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Alation's pricing model for its data catalog and intelligence platform is not straightforward and involves several components. Here are the key points to consider:\n\n## Base Pricing\n- The Alation Data Catalog subscription starts at $60,000 for a 12-month contract. This is the minimum cost listed on various sources, including Amazon Marketplace and other reviews[2][4][5].\n\n## Additional Costs\n- Beyond the base licensing fee, there are several other costs to consider:\n  - Cloud hosting costs: These can add significantly to the total cost. For example, a GigaOm estimate suggested that for a medium enterprise solution, the Alation portion of the costs, including cloud hosting, could amount to $413,660 per year, with $198,000 being the base licensing cost for 25 contributors[1].\n  - Implementation, training, and support costs: These can also contribute to the overall expense. Customer feedback indicates that the cumulative costs, including these aspects, can become quite expensive[2][3].\n\n## Pricing Model Complexity\n- Alation's pricing model is complex and can include many add-ons, especially for the on-premise version. Users have expressed concerns about hidden costs and the complexity of the pricing structure, particularly the limitation on read-only users and the need for additional connectors[2][3].\n\n## New Pricing Models\n- There are indications that Alation is testing a new asset-based pricing model, which could lower initial costs but may result in higher costs as the scale of data estate assets managed by Alation increases[1].\n\n## Comparisons with Competitors\n- Alation's costs are generally higher compared to some competitors. For instance, data catalog solutions from cloud vendors like AWS, Microsoft, and Google often cost less than 1% of the total stack cost, whereas Alation's costs can be around 10% of the total stack cost, although Alation offers more advanced features like data lineage, embedded collaboration, and granular governance[1].\n\n## Custom and Enterprise Pricing\n- For customized pricing or private contracts, potential customers are advised to contact Alation directly. This suggests that larger or more complex installations may have bespoke pricing arrangements[4][5].\n\nIn summary, while the base price of Alation's Data Catalog starts at $60,000 per year, the total cost of ownership can be significantly higher due to additional costs associated with cloud hosting, implementation, training, and support, as well as the complexity of the pricing model itself.",
+        "refusal": ""
+      }
+    }
+  ],
+  "citations": [
+    "https://atlan.com/alation-pricing/",
+    "https://data.world/blog/alation-pricing/",
+    "https://www.trustradius.com/products/alation-data-catalog/pricing",
+    "https://aws.amazon.com/marketplace/pp/prodview-ylge6fq43dtg6",
+    "https://www.alation.com/pricing/"
+  ],
+  "usage": {
+    "prompt_tokens": 3,
+    "completion_tokens": 499,
+    "total_tokens": 502
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Alation's pricing model for its data catalog and intelligence platform is not straightforward and involves several components. Here are the key points to consider:
+
+## Base Pricing
+- The Alation Data Catalog subscription starts at $60,000 for a 12-month contract. This is the minimum cost listed on various sources, including Amazon Marketplace and other reviews[2][4][5].
+
+## Additional Costs
+- Beyond the base licensing fee, there are several other costs to consider:
+  - Cloud hosting costs: These can add significantly to the total cost. For example, a GigaOm estimate suggested that for a medium enterprise solution, the Alation portion of the costs, including cloud hosting, could amount to $413,660 per year, with $198,000 being the base licensing cost for 25 contributors[1].
+  - Implementation, training, and support costs: These can also contribute to the overall expense. Customer feedback indicates that the cumulative costs, including these aspects, can become quite expensive[2][3].
+
+## Pricing Model Complexity
+- Alation's pricing model is complex and can include many add-ons, especially for the on-premise version. Users have expressed concerns about hidden costs and the complexity of the pricing structure, particularly the limitation on read-only users and the need for additional connectors[2][3].
+
+## New Pricing Models
+- There are indications that Alation is testing a new asset-based pricing model, which could lower initial costs but may result in higher costs as the scale of data estate assets managed by Alation increases[1].
+
+## Comparisons with Competitors
+- Alation's costs are generally higher compared to some competitors. For instance, data catalog solutions from cloud vendors like AWS, Microsoft, and Google often cost less than 1% of the total stack cost, whereas Alation's costs can be around 10% of the total stack cost, although Alation offers more advanced features like data lineage, embedded collaboration, and granular governance[1].
+
+## Custom and Enterprise Pricing
+- For customized pricing or private contracts, potential customers are advised to contact Alation directly. This suggests that larger or more complex installations may have bespoke pricing arrangements[4][5].
+
+In summary, while the base price of Alation's Data Catalog starts at $60,000 per year, the total cost of ownership can be significantly higher due to additional costs associated with cloud hosting, implementation, training, and support, as well as the complexity of the pricing model itself.

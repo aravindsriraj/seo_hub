@@ -1,0 +1,58 @@
+Timestamp: 2024-11-30 08:47:03
+Model: Llama 3.1 8B Instruct
+Keyword: alation alternatives
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936618-LCNNDegJrc9WS3kbCIHN",
+  "provider": "DeepInfra",
+  "model": "meta-llama/llama-3.1-8b-instruct",
+  "object": "chat.completion",
+  "created": 1732936618,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "You're looking for alternatives to Alienation!\n\nHere are a few options:\n\n1. **Space Combat Games**:\n\t* Star Wars: Squadrons (EA DICE)\n\t* Rebel Galaxy Outlaw (Double Damage Games)\n\t* Star Conflict (Star Conflict Team)\n\t* Elite Dangerous (Frontier Developments)\n2. **Top-Down Shooters**:\n\t* Enter the Gungeon (Dodge Roll)\n\t* Bullet Hell Monday (Dodge Roll)\n\t* Nuclear Throne (Vlambeer)\n\t* Spelunky (Mossmouth)\n3. **Action-Packed Space Games**:\n\t* Destiny 2 (Bungie)\n\t* Warframe (Digital Extremes)\n\t* No Man's Sky (Hello Games)\n\t* Freelancer (Digital Anvil)\n4. **Roguelike Space Games**:\n\t* FTL: Faster Than Light (Subset Games)\n\t* The Sinking City (Bigben Interactive)\n\t* Axiom Verge (Thomas Happ Games)\n\t* Dead Cells (Motion Twin)\n\nIf you could provide more context or details about what you liked about Alienation, I'd be happy to give you more tailored recommendations!",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 13,
+    "completion_tokens": 244,
+    "total_tokens": 257
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+You're looking for alternatives to Alienation!
+
+Here are a few options:
+
+1. **Space Combat Games**:
+	* Star Wars: Squadrons (EA DICE)
+	* Rebel Galaxy Outlaw (Double Damage Games)
+	* Star Conflict (Star Conflict Team)
+	* Elite Dangerous (Frontier Developments)
+2. **Top-Down Shooters**:
+	* Enter the Gungeon (Dodge Roll)
+	* Bullet Hell Monday (Dodge Roll)
+	* Nuclear Throne (Vlambeer)
+	* Spelunky (Mossmouth)
+3. **Action-Packed Space Games**:
+	* Destiny 2 (Bungie)
+	* Warframe (Digital Extremes)
+	* No Man's Sky (Hello Games)
+	* Freelancer (Digital Anvil)
+4. **Roguelike Space Games**:
+	* FTL: Faster Than Light (Subset Games)
+	* The Sinking City (Bigben Interactive)
+	* Axiom Verge (Thomas Happ Games)
+	* Dead Cells (Motion Twin)
+
+If you could provide more context or details about what you liked about Alienation, I'd be happy to give you more tailored recommendations!

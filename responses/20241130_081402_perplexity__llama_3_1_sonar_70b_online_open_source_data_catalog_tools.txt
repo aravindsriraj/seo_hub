@@ -1,0 +1,68 @@
+Timestamp: 2024-11-30 08:14:02
+Model: Perplexity: Llama 3.1 Sonar 70B Online
+Keyword: open source data catalog tools
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732934630-MvfL7HJLPCGNJ2J20pBJ",
+  "provider": "Perplexity",
+  "model": "perplexity/llama-3.1-sonar-large-128k-online",
+  "object": "chat.completion",
+  "created": 1732934630,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "When evaluating open-source data catalog tools, several options stand out for their features, community support, and scalability. Here are some of the most notable ones:\n\n## DataHub\n- Developed by LinkedIn, DataHub is known for its modular and service-oriented architecture. It supports both push-and-pull options for metadata ingestion, full-text search, and data lineage capabilities. DataHub has a wide range of connectors and integrations, frequent releases, and an active community[1][2].\n\n## OpenMetadata\n- Built by the team behind Uber\u2019s data infrastructure, OpenMetadata focuses on metadata centralization for governance, quality, profiling, and collaboration. It uses PostgreSQL\u2019s graph capabilities and extensible architecture instead of traditional graph databases or full-text search engines. OpenMetadata is widely used and actively developed, with a broad set of connectors and integrations[1][2][3].\n\n## Amundsen\n- Amundsen is an open-source data discovery and metadata engine that uses a PageRank-inspired search algorithm to recommend data based on names, descriptions, tags, and usage activity. It provides automated and curated metadata, context sharing among coworkers, and insights into how others use the data. Amundsen is easy to integrate and set up, running on Docker, EC2, and Kubernetes[5].\n\n## Magda\n- Magda is a federated data catalog system designed to provide a single place for cataloging, enriching, searching, tracking, and prioritizing data from various sources. It excels in federation, allowing it to pull data from multiple sources into a single searchable catalog. Magda features advanced search functionality, automatic metadata enhancement, and history tracking[4].\n\n## Marquez\n- Marquez focuses on data lineage and metadata management, integrating with popular data processing frameworks like Apache Spark and Airflow. It offers a RESTful API for metadata access and is particularly useful for teams needing detailed metadata and lineage tracking[2].\n\n## OpenDataDiscovery\n- OpenDataDiscovery was initially developed for ML teams but is now used by data engineering and data science teams as well. It features a federated data catalog, end-to-end discovery, ingestion-to-product data lineage, and user collaboration. It integrates with tools like dbt, Snowflake, and KubeFlow[1].\n\n## LakeFS\n- LakeFS is ideal for cloud-based data lakes, offering data versioning and lineage tracking. It is scalable and suitable for managing large-scale cloud data repositories, although it may require cloud platform expertise and has limited support for on-premises data storage[2][3].\n\n## Other Notable Tools\n\n- **Superset Data Catalog**: Integrates with the Superset data exploration tool, offering comprehensive metadata management and data lineage tracking[2].\n- **Gravitino Data Catalog**: An open-source, high-performance metadata lake built on Apache Iceberg, providing consistent metadata access via REST APIs and supporting the Iceberg REST catalog interface[3].\n\nWhen choosing an open-source data catalog tool, consider factors such as the tool's feature set, community support, active development status, and how well it integrates with your existing data ecosystem.",
+        "refusal": ""
+      }
+    }
+  ],
+  "citations": [
+    "https://atlan.com/open-source-data-catalog-tools/",
+    "https://www.datahen.com/blog/7-open-source-data-catalog-tools/",
+    "https://lakefs.io/blog/top-data-catalog-tools/",
+    "https://magda.io",
+    "https://www.amundsen.io"
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 628,
+    "total_tokens": 633
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+When evaluating open-source data catalog tools, several options stand out for their features, community support, and scalability. Here are some of the most notable ones:
+
+## DataHub
+- Developed by LinkedIn, DataHub is known for its modular and service-oriented architecture. It supports both push-and-pull options for metadata ingestion, full-text search, and data lineage capabilities. DataHub has a wide range of connectors and integrations, frequent releases, and an active community[1][2].
+
+## OpenMetadata
+- Built by the team behind Uber’s data infrastructure, OpenMetadata focuses on metadata centralization for governance, quality, profiling, and collaboration. It uses PostgreSQL’s graph capabilities and extensible architecture instead of traditional graph databases or full-text search engines. OpenMetadata is widely used and actively developed, with a broad set of connectors and integrations[1][2][3].
+
+## Amundsen
+- Amundsen is an open-source data discovery and metadata engine that uses a PageRank-inspired search algorithm to recommend data based on names, descriptions, tags, and usage activity. It provides automated and curated metadata, context sharing among coworkers, and insights into how others use the data. Amundsen is easy to integrate and set up, running on Docker, EC2, and Kubernetes[5].
+
+## Magda
+- Magda is a federated data catalog system designed to provide a single place for cataloging, enriching, searching, tracking, and prioritizing data from various sources. It excels in federation, allowing it to pull data from multiple sources into a single searchable catalog. Magda features advanced search functionality, automatic metadata enhancement, and history tracking[4].
+
+## Marquez
+- Marquez focuses on data lineage and metadata management, integrating with popular data processing frameworks like Apache Spark and Airflow. It offers a RESTful API for metadata access and is particularly useful for teams needing detailed metadata and lineage tracking[2].
+
+## OpenDataDiscovery
+- OpenDataDiscovery was initially developed for ML teams but is now used by data engineering and data science teams as well. It features a federated data catalog, end-to-end discovery, ingestion-to-product data lineage, and user collaboration. It integrates with tools like dbt, Snowflake, and KubeFlow[1].
+
+## LakeFS
+- LakeFS is ideal for cloud-based data lakes, offering data versioning and lineage tracking. It is scalable and suitable for managing large-scale cloud data repositories, although it may require cloud platform expertise and has limited support for on-premises data storage[2][3].
+
+## Other Notable Tools
+
+- **Superset Data Catalog**: Integrates with the Superset data exploration tool, offering comprehensive metadata management and data lineage tracking[2].
+- **Gravitino Data Catalog**: An open-source, high-performance metadata lake built on Apache Iceberg, providing consistent metadata access via REST APIs and supporting the Iceberg REST catalog interface[3].
+
+When choosing an open-source data catalog tool, consider factors such as the tool's feature set, community support, active development status, and how well it integrates with your existing data ecosystem.

@@ -1,0 +1,67 @@
+Timestamp: 2024-11-30 09:15:36
+Model: Perplexity: Llama 3.1 Sonar 70B Online
+Keyword: forrester data catalog
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732938326-TXBiVCX1eV8I4Q736AI9",
+  "provider": "Perplexity",
+  "model": "perplexity/llama-3.1-sonar-large-128k-online",
+  "object": "chat.completion",
+  "created": 1732938326,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "The Forrester Wave\u2122: Enterprise Data Catalogs, Q3 2024, provides a comprehensive evaluation of enterprise data catalog solutions, helping organizations select the best fit for their data management needs. Here are some key points from the report:\n\n## Evaluation Criteria\nThe report evaluates 12 data catalog solutions across 24 criteria, which are categorized into:\n- **Current Offering**: This includes essential product capabilities such as metadata management, data discovery and profiling, data quality and observability, governance, risk, and compliance, and more[1][2][4].\n\n## Key Attributes\nForrester emphasizes the importance of the following attributes in a comprehensive data catalog solution:\n- **Automated Cataloging**: The ability to automatically catalog the entire technology, data, and AI ecosystem to ensure a complete view of all data assets[2][4].\n- **AI and Automation**: Embedding AI, ML, and automation within core cataloging features to reduce time and resources needed for effective cataloging[2][4].\n- **Data Democratization and Self-Service**: Prioritizing data democratization and self-service to facilitate an insights-driven culture and informed decision-making[2][4].\n\n## Leader Vendors\nSeveral vendors were identified as Leaders in the report:\n- **Atlan**: Atlan was recognized for its AI-powered catalog, scoring the highest possible scores in 15 criteria, including governance, risk, and compliance, data lineage, and adoption. Atlan is noted for its personalized, AI-driven catalog and advanced automation capabilities[1][4].\n- **Collibra**: Collibra was also named a Leader, recognized for its unified and adaptive data and AI governance, continuous quality, and built-in privacy. Collibra received the highest possible scores in innovation, roadmap, partner ecosystem, revenue, and number of customers within the Strategy and Market Presence categories[2].\n\n## Market Trends\nThe report highlights that enterprise data catalogs are undergoing a transformation driven by:\n- **AI Advancements**: The increasing role of AI in data management.\n- **Fragmented and Complex Data Estates**: The need to manage diverse and complex data environments.\n- **Accessibility Needs**: Ensuring data is accessible and usable across the organization.\n- **Strategic Imperatives**: Harnessing data for competitive advantage[1][2][4].\n\n## Recommendations\nForrester advises organizations to seek providers that can bridge the gap between complex datasets, governance, business insights, and AI enablement. The report emphasizes the need for solutions that provide a complete view of all data assets, including AI/ML models, and that facilitate data democratization and self-service[1][2][4].\n\nTo get a detailed understanding, the full report is available for purchase or through a Forrester client account[3][5].",
+        "refusal": ""
+      }
+    }
+  ],
+  "citations": [
+    "https://atlan.com/forrester-wave-enterprise-data-catalogs-2024/",
+    "https://www.collibra.com/us/en/blog/collibra-a-leader-in-the-forrester-wave-enterprise-data-catalogs-q3-2024",
+    "https://www.forrester.com/report/the-forrester-wave-tm-enterprise-data-catalogs-q3-2024/RES181073",
+    "https://atlan.com/forrester-wave/",
+    "https://www.forrester.com/report/the-forrester-wave-enterprise-data-catalogs-for-dataops-q2-2022/RES176355"
+  ],
+  "usage": {
+    "prompt_tokens": 5,
+    "completion_tokens": 560,
+    "total_tokens": 565
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+The Forrester Wave™: Enterprise Data Catalogs, Q3 2024, provides a comprehensive evaluation of enterprise data catalog solutions, helping organizations select the best fit for their data management needs. Here are some key points from the report:
+
+## Evaluation Criteria
+The report evaluates 12 data catalog solutions across 24 criteria, which are categorized into:
+- **Current Offering**: This includes essential product capabilities such as metadata management, data discovery and profiling, data quality and observability, governance, risk, and compliance, and more[1][2][4].
+
+## Key Attributes
+Forrester emphasizes the importance of the following attributes in a comprehensive data catalog solution:
+- **Automated Cataloging**: The ability to automatically catalog the entire technology, data, and AI ecosystem to ensure a complete view of all data assets[2][4].
+- **AI and Automation**: Embedding AI, ML, and automation within core cataloging features to reduce time and resources needed for effective cataloging[2][4].
+- **Data Democratization and Self-Service**: Prioritizing data democratization and self-service to facilitate an insights-driven culture and informed decision-making[2][4].
+
+## Leader Vendors
+Several vendors were identified as Leaders in the report:
+- **Atlan**: Atlan was recognized for its AI-powered catalog, scoring the highest possible scores in 15 criteria, including governance, risk, and compliance, data lineage, and adoption. Atlan is noted for its personalized, AI-driven catalog and advanced automation capabilities[1][4].
+- **Collibra**: Collibra was also named a Leader, recognized for its unified and adaptive data and AI governance, continuous quality, and built-in privacy. Collibra received the highest possible scores in innovation, roadmap, partner ecosystem, revenue, and number of customers within the Strategy and Market Presence categories[2].
+
+## Market Trends
+The report highlights that enterprise data catalogs are undergoing a transformation driven by:
+- **AI Advancements**: The increasing role of AI in data management.
+- **Fragmented and Complex Data Estates**: The need to manage diverse and complex data environments.
+- **Accessibility Needs**: Ensuring data is accessible and usable across the organization.
+- **Strategic Imperatives**: Harnessing data for competitive advantage[1][2][4].
+
+## Recommendations
+Forrester advises organizations to seek providers that can bridge the gap between complex datasets, governance, business insights, and AI enablement. The report emphasizes the need for solutions that provide a complete view of all data assets, including AI/ML models, and that facilitate data democratization and self-service[1][2][4].
+
+To get a detailed understanding, the full report is available for purchase or through a Forrester client account[3][5].

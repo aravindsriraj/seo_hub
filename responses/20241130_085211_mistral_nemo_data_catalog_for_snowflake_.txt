@@ -1,0 +1,112 @@
+Timestamp: 2024-11-30 08:52:11
+Model: Mistral Nemo
+Keyword: data catalog for snowflake 
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732936916-QvoRDPUHx4Pl3l8hXA1V",
+  "provider": "Novita",
+  "model": "mistralai/mistral-nemo",
+  "object": "chat.completion",
+  "created": 1732936916,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here's a simple data catalog for Snowflake, outlining databases, schemas, tables, and some relevant metadata. This example assumes you have a data warehouse for your business, with a focus on sales and marketing data.\n\n1. **Database: snowflake_data_warehouse**\n\n   - **Schema: sales**\n     - *Table: orders*\n       - `order_id` (Primary Key, INT)\n       - `customer_id` (INT)\n       - `order_date` (DATE)\n       - `total_amount` (NUMBER)\n       - `order_status` (VARCHAR)\n     - *Table: order_items*\n       - `order_id` (INT)\n       - `product_id` (INT)\n       - `quantity` (INT)\n       - `item_price` (NUMBER)\n     - *Table: customers*\n       - `customer_id` (Primary Key, INT)\n       - `first_name` (VARCHAR)\n       - `last_name` (VARCHAR)\n       - `email` (VARCHAR)\n       - `phone_number` (VARCHAR)\n       - `address` (VARCHAR)\n     - *Table: products*\n       - `product_id` (Primary Key, INT)\n       - `product_name` (VARCHAR)\n       - `category` (VARCHAR)\n       - `price` (NUMBER)\n       - `description` (VARCHAR)\n     - *Table: promotions*\n       - `promotion_id` (Primary Key, INT)\n       - `promotion_name` (VARCHAR)\n       - `start_date` (DATE)\n       - `end_date` (DATE)\n       - `discount_percentage` (NUMBER)\n\n   - **Schema: marketing**\n     - *Table: campaigns*\n       - `campaign_id` (Primary Key, INT)\n       - `campaign_name` (VARCHAR)\n       - `start_date` (DATE)\n       - `end_date` (DATE)\n       - `campaign_type` (VARCHAR)\n       - `budget` (NUMBER)\n     - *Table: leads*\n       - `lead_id` (Primary Key, INT)\n       - `campaign_id` (INT)\n       - `source` (VARCHAR)\n       - `first_name` (VARCHAR)\n       - `last_name` (VARCHAR)\n       - `email` (VARCHAR)\n       - `phone_number` (VARCHAR)\n       - `lead_status` (VARCHAR)\n     - *Table: campaign_performance*\n       - `campaign_id` (Primary Key, INT)\n       - `impressions` (BIGINT)\n       - `clicks` (BIGINT)\n       - `conversions` (BIGINT)\n       - `cost_per_acquisition` (NUMBER)\n       - `return_on_ad_spend` (NUMBER)\n\n   - **Schema: finance**\n     (Tables for financial data, such as revenue, costs, and business metrics)\n\n   - **Schema: Protagonist**\n     (Tables for other departments like HR, IT, etc. based on the business needs)\n\n2. **Database: data_mart**\n   - **Schema: analysis**\n     (Fact and dimension tables created using data from the data warehouse for better analysis)\n\n3. **Database: data_lake**\n   - **Location: s3://mycompanyRawData**\n     - Raw data files from various sources like APIs, marketing tools, etc.\n\n4. **Database: test_data_warehouse**\n   - **Schema: test**\n     (Tables for testing etl transformations and other processes before applying them to the actual data warehouse)\n\nThis catalog provides an overview of the databases, schemas, tables, and some relevant metadata in Snowflake. It's essential to keep your data catalog up-to-date and accessible to all relevant stakeholders to ensure efficient data management and governance.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 11,
+    "completion_tokens": 800,
+    "total_tokens": 811
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here's a simple data catalog for Snowflake, outlining databases, schemas, tables, and some relevant metadata. This example assumes you have a data warehouse for your business, with a focus on sales and marketing data.
+
+1. **Database: snowflake_data_warehouse**
+
+   - **Schema: sales**
+     - *Table: orders*
+       - `order_id` (Primary Key, INT)
+       - `customer_id` (INT)
+       - `order_date` (DATE)
+       - `total_amount` (NUMBER)
+       - `order_status` (VARCHAR)
+     - *Table: order_items*
+       - `order_id` (INT)
+       - `product_id` (INT)
+       - `quantity` (INT)
+       - `item_price` (NUMBER)
+     - *Table: customers*
+       - `customer_id` (Primary Key, INT)
+       - `first_name` (VARCHAR)
+       - `last_name` (VARCHAR)
+       - `email` (VARCHAR)
+       - `phone_number` (VARCHAR)
+       - `address` (VARCHAR)
+     - *Table: products*
+       - `product_id` (Primary Key, INT)
+       - `product_name` (VARCHAR)
+       - `category` (VARCHAR)
+       - `price` (NUMBER)
+       - `description` (VARCHAR)
+     - *Table: promotions*
+       - `promotion_id` (Primary Key, INT)
+       - `promotion_name` (VARCHAR)
+       - `start_date` (DATE)
+       - `end_date` (DATE)
+       - `discount_percentage` (NUMBER)
+
+   - **Schema: marketing**
+     - *Table: campaigns*
+       - `campaign_id` (Primary Key, INT)
+       - `campaign_name` (VARCHAR)
+       - `start_date` (DATE)
+       - `end_date` (DATE)
+       - `campaign_type` (VARCHAR)
+       - `budget` (NUMBER)
+     - *Table: leads*
+       - `lead_id` (Primary Key, INT)
+       - `campaign_id` (INT)
+       - `source` (VARCHAR)
+       - `first_name` (VARCHAR)
+       - `last_name` (VARCHAR)
+       - `email` (VARCHAR)
+       - `phone_number` (VARCHAR)
+       - `lead_status` (VARCHAR)
+     - *Table: campaign_performance*
+       - `campaign_id` (Primary Key, INT)
+       - `impressions` (BIGINT)
+       - `clicks` (BIGINT)
+       - `conversions` (BIGINT)
+       - `cost_per_acquisition` (NUMBER)
+       - `return_on_ad_spend` (NUMBER)
+
+   - **Schema: finance**
+     (Tables for financial data, such as revenue, costs, and business metrics)
+
+   - **Schema: Protagonist**
+     (Tables for other departments like HR, IT, etc. based on the business needs)
+
+2. **Database: data_mart**
+   - **Schema: analysis**
+     (Fact and dimension tables created using data from the data warehouse for better analysis)
+
+3. **Database: data_lake**
+   - **Location: s3://mycompanyRawData**
+     - Raw data files from various sources like APIs, marketing tools, etc.
+
+4. **Database: test_data_warehouse**
+   - **Schema: test**
+     (Tables for testing etl transformations and other processes before applying them to the actual data warehouse)
+
+This catalog provides an overview of the databases, schemas, tables, and some relevant metadata in Snowflake. It's essential to keep your data catalog up-to-date and accessible to all relevant stakeholders to ensure efficient data management and governance.

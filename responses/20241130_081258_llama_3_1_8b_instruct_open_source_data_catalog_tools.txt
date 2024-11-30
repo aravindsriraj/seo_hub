@@ -1,0 +1,53 @@
+Timestamp: 2024-11-30 08:12:58
+Model: Llama 3.1 8B Instruct
+Keyword: open source data catalog tools
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732934574-kd5eU0qUSpTRDCs0nRMW",
+  "provider": "Lepton",
+  "model": "meta-llama/llama-3.1-8b-instruct",
+  "object": "chat.completion",
+  "created": 1732934574,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here are some popular open-source data catalog tools:\n\n1. **Apache Atlas**: A fully open source data governance and metadata management tool. It provides features such as data cataloging, lineage, and metrics.\n2. **Amazon Glue**: While Amazon Glue is not exclusively open-source, its Data Catalog component is open-sourced and can be run on-premises.\n3. **Metadata Commander**: A web-based data catalog that provides features such as data discovery, documentation, and collaboration.\n4. **Catalog**: An open-source data catalog written in Python that provides features such as data discovery, documentation, and metrics.\n5. **Data Explorer**: A data catalog built on top of Apache Cayenne, a Java-based data access framework.\n6. **Talend Data Fabric**: An open-source data integration platform that includes a data catalog module.\n7. **Cayenne**: A Java-based data access framework that includes a data catalog feature.\n8. **Zeppelin**: A web-based notebook that provides a built-in data catalog feature for data discovery and exploration.\n9. **OpenRefine**: A data manipulation and transformation tool that provides a data catalog feature for data discovery and documentation.\n10. **DataMed**: An open-source metadata management tool for scientific research data.\n\nSome other tools that are not exclusively open-source but offer open-source components or plugins for data cataloging include:\n\n1. **Microsoft Azure**: Offers an open-source SDK for its data catalog tool.\n2. **Splunk**: Offers an open-source Splunk SDK for data cataloging.\n3. **Alfresco**: Offers an open-source metadata management module for Alfresco.\n4. **Elasticsearch**: Can be used as a data catalog platform with the right plugins and configuration.\n\nIt's worth noting that this is not an exhaustive list, and new tools and projects are emerging all the time.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 378,
+    "total_tokens": 393
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Here are some popular open-source data catalog tools:
+
+1. **Apache Atlas**: A fully open source data governance and metadata management tool. It provides features such as data cataloging, lineage, and metrics.
+2. **Amazon Glue**: While Amazon Glue is not exclusively open-source, its Data Catalog component is open-sourced and can be run on-premises.
+3. **Metadata Commander**: A web-based data catalog that provides features such as data discovery, documentation, and collaboration.
+4. **Catalog**: An open-source data catalog written in Python that provides features such as data discovery, documentation, and metrics.
+5. **Data Explorer**: A data catalog built on top of Apache Cayenne, a Java-based data access framework.
+6. **Talend Data Fabric**: An open-source data integration platform that includes a data catalog module.
+7. **Cayenne**: A Java-based data access framework that includes a data catalog feature.
+8. **Zeppelin**: A web-based notebook that provides a built-in data catalog feature for data discovery and exploration.
+9. **OpenRefine**: A data manipulation and transformation tool that provides a data catalog feature for data discovery and documentation.
+10. **DataMed**: An open-source metadata management tool for scientific research data.
+
+Some other tools that are not exclusively open-source but offer open-source components or plugins for data cataloging include:
+
+1. **Microsoft Azure**: Offers an open-source SDK for its data catalog tool.
+2. **Splunk**: Offers an open-source Splunk SDK for data cataloging.
+3. **Alfresco**: Offers an open-source metadata management module for Alfresco.
+4. **Elasticsearch**: Can be used as a data catalog platform with the right plugins and configuration.
+
+It's worth noting that this is not an exhaustive list, and new tools and projects are emerging all the time.

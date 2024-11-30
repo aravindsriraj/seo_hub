@@ -1,0 +1,63 @@
+Timestamp: 2024-11-30 08:25:18
+Model: Mistral Nemo
+Keyword: data catalog pricing 
+--------------------------------------------------------------------------------
+API Response:
+{
+  "id": "gen-1732935307-Q8teiA2qm6WNttltGmVs",
+  "provider": "DeepInfra",
+  "model": "mistralai/mistral-nemo",
+  "object": "chat.completion",
+  "created": 1732935307,
+  "choices": [
+    {
+      "logprobs": null,
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Data catalog pricing can vary greatly depending on the features, scalability, and the specific provider. Here are some examples of pricing for popular data catalog services:\n\n1. **Google Cloud Data Catalog**:\n   - Free tier: Up to 30 GB of metadata storage per month.\n   - Paid tier: Starts at $0.40 per GB per month, with a free allowance of 1 GB. You only pay for the metadata storage you use.\n\n2. **Amazon Glue Data Catalog**:\n   - Free tier: Up to 1 million metadata objects.\n   - Paid tier: $0.007 per million metadata objects stored, charged on an hourly basis.\n\n3. **Microsoft Azure Data Catalog**:\n   - Free tier: Up to 500 MB of data per month.\n   - Paid tier: Starts at $0.40 per GB per month, with a free allowance of 0.5 GB.\n\n4. **SAS Data Management**:\n   - Pricing varies depending on the specific components you choose (Data Management, Data Federation, Data Quality, etc.). Contact SAS for a custom quote.\n\n5. **Alation**:\n   - Pricing is not publicly disclosed, but it's known to be subscription-based with tiered plans (Professional, Business, and Enterprise).\n\n6. **Collibra**:\n   - Pricing is not publicly disclosed, but it's subscription-based with tiered plans (Team, Business, and Enterprise).\n\n7. **Erwin**:\n   - Pricing varies by product and is not publicly disclosed. Contact Erwin for a custom quote.\n\nRemember that pricing can change, and these are rough estimates. Most providers offer volume discounts and enterprise licensing options. It's best to contact the provider directly for the most accurate and up-to-date pricing information.\n\nAlso, consider factors beyond just the software cost, such as implementation, support, and training costs. Each vendor may offer different levels of service, which can impact the total cost of ownership.\n\nLastly, some open-source data catalog solutions like Apache Atlas, Amundsen, or Partsheet have no software licensing costs, but you'll need to consider infrastructure costs and potential maintenance/operational costs.",
+        "refusal": ""
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 8,
+    "completion_tokens": 450,
+    "total_tokens": 458
+  }
+}
+--------------------------------------------------------------------------------
+
+Extracted Content:
+Data catalog pricing can vary greatly depending on the features, scalability, and the specific provider. Here are some examples of pricing for popular data catalog services:
+
+1. **Google Cloud Data Catalog**:
+   - Free tier: Up to 30 GB of metadata storage per month.
+   - Paid tier: Starts at $0.40 per GB per month, with a free allowance of 1 GB. You only pay for the metadata storage you use.
+
+2. **Amazon Glue Data Catalog**:
+   - Free tier: Up to 1 million metadata objects.
+   - Paid tier: $0.007 per million metadata objects stored, charged on an hourly basis.
+
+3. **Microsoft Azure Data Catalog**:
+   - Free tier: Up to 500 MB of data per month.
+   - Paid tier: Starts at $0.40 per GB per month, with a free allowance of 0.5 GB.
+
+4. **SAS Data Management**:
+   - Pricing varies depending on the specific components you choose (Data Management, Data Federation, Data Quality, etc.). Contact SAS for a custom quote.
+
+5. **Alation**:
+   - Pricing is not publicly disclosed, but it's known to be subscription-based with tiered plans (Professional, Business, and Enterprise).
+
+6. **Collibra**:
+   - Pricing is not publicly disclosed, but it's subscription-based with tiered plans (Team, Business, and Enterprise).
+
+7. **Erwin**:
+   - Pricing varies by product and is not publicly disclosed. Contact Erwin for a custom quote.
+
+Remember that pricing can change, and these are rough estimates. Most providers offer volume discounts and enterprise licensing options. It's best to contact the provider directly for the most accurate and up-to-date pricing information.
+
+Also, consider factors beyond just the software cost, such as implementation, support, and training costs. Each vendor may offer different levels of service, which can impact the total cost of ownership.
+
+Lastly, some open-source data catalog solutions like Apache Atlas, Amundsen, or Partsheet have no software licensing costs, but you'll need to consider infrastructure costs and potential maintenance/operational costs.

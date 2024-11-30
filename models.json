@@ -1,0 +1,48 @@
+{
+    "models": [
+      {
+        "id": "openai/chatgpt-4o-latest",
+        "name": "ChatGPT-4o"
+      },
+      {
+        "id": "openai/gpt-4o-mini",
+        "name": "GPT-4o-mini"
+      },
+      {
+        "id": "anthropic/claude-3-5-haiku-20241022:beta",
+        "name": "Claude 3.5 Haiku"
+      },
+      {
+        "id": "google/gemini-flash-1.5-8b",
+        "name": "Gemini 1.5 Flash-8B"
+      },
+      {
+        "id": "meta-llama/llama-3.1-70b-instruct",
+        "name": "Llama 3.1 70B Instruct"
+      },
+      {
+        "id": "meta-llama/llama-3.1-8b-instruct",
+        "name": "Llama 3.1 8B Instruct"
+      },
+      {
+        "id":"mistralai/mistral-large-2411",
+        "name":"Mistral Large"
+      },
+      {
+        "id":"mistralai/mistral-nemo",
+        "name":"Mistral Nemo"
+      },
+      {
+        "id":"google/gemini-exp-1121:free",
+        "name":"Gemini Experimental 1121"
+      },
+      {
+        "id":"google/learnlm-1.5-pro-experimental:free",
+        "name":"Google: LearnLM 1.5 Pro Experimental"
+      },
+      {
+        "id":"perplexity/llama-3.1-sonar-large-128k-online",
+        "name":"Perplexity: Llama 3.1 Sonar 70B Online"
+      }
+    ]
+  }
