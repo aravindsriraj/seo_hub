@@ -146,6 +146,8 @@ class DatabaseOperations:
         conn.close()
         return df
 
+
+
     # ====================== Rankings Database Operations ======================
     def get_ranking_data(self, keywords: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
         """Get ranking data for specified keywords and date range."""
@@ -219,6 +221,27 @@ class DatabaseOperations:
         conn.close()
         return df
     # ====================== AI Models Database Operations ======================
+    def get_available_keywords(self) -> List[str]:
+        """Get list of available keywords from the database."""
+        try:
+            conn = self.get_connection(config.AIMODELS_DB_PATH)
+            query = """
+            SELECT DISTINCT keyword 
+            FROM keyword_rankings 
+            WHERE check_date >= date('now', '-30 days')
+            ORDER BY keyword
+            """
+            
+            df = pd.read_sql_query(query, conn)
+            conn.close()
+            
+            return df['keyword'].tolist()
+            
+        except Exception as e:
+            st.error(f"Error fetching keywords: {str(e)}")
+            return []
+    
+    
     def get_llm_mention_data(self, model_name: str) -> pd.DataFrame:
         """Get mention data for a specific model."""
         try:

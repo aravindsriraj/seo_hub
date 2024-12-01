@@ -4,6 +4,7 @@ from seo_hub.data.operations import db_ops
 from seo_hub.ui.views import views
 from seo_hub.ui.components import metrics, progress
 from seo_hub.ui.qa_view import QAView
+from ui.sitemap_view import SitemapView
 
 
 def initialize_app():
@@ -23,7 +24,7 @@ def setup_sidebar():
 
         # Model Information
    
-        with st.expander("Model Information", expanded=True):
+        with st.expander("Model Information", expanded=False):
             api_key = config.GEMINI_API_KEY
             masked_key = "****" + api_key[-4:] if api_key != "Not configured" else "Not configured"
             
@@ -33,20 +34,27 @@ def setup_sidebar():
             )
 
         # Analysis Controls
-        with st.expander("Analysis Controls", expanded=True):
-            if st.button("Reset Analysis"):
-                db_ops.reset_database()
-                st.success("Analysis reset. Status set to 'Pending'.")
+        with st.expander("Analysis Controls", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("Reset Analysis", use_container_width=True):
+                    db_ops.reset_database()
+                    st.success("Analysis reset. Status set to 'Pending'.")
 
-            if st.button("Reset Status"):
-                db_ops.reset_status()
-                st.success("All statuses have been reset to 'Pending'.")
+            with col2:
+                if st.button("Reset Status", use_container_width=True):
+                    db_ops.reset_status()
+                    st.success("All statuses have been reset to 'Pending'.")
 
-            if st.button("Analyze URLs"):
-                content_processor.process_pending_urls()
+            # New row
+            col3, col4 = st.columns(2)
+            with col3:
+                if st.button("Analyze URLs", use_container_width=True):
+                    content_processor.process_pending_urls()
 
         # Database Controls
-        with st.expander("Database Controls", expanded=True):
+        with st.expander("Database Controls", expanded=False):
             # Add Column
             new_column_name = st.text_input("Add New Column Name")
             if st.button("Add Column"):
@@ -67,7 +75,7 @@ def setup_sidebar():
                     st.error(str(e))
 
         # Settings
-        with st.expander("Settings", expanded=True):
+        with st.expander("Settings", expanded=False):
             sitemap_url = st.text_input(
                 "Enter Sitemap URL (XML)", 
                 placeholder="https://example.com/sitemap.xml"
@@ -80,6 +88,9 @@ def setup_sidebar():
                             st.success(f"Successfully ingested {count} URLs from the sitemap.")
                         else:
                             st.warning("No URLs found in the provided sitemap.")
+
+        sitemap_view = SitemapView()
+        sitemap_view.render()
 
 def main():
     """Main application entry point."""

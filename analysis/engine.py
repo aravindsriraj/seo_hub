@@ -14,6 +14,10 @@ class CompetitiveAnalysisEngine:
         api_key = config.GEMINI_API_KEY
         st.write(f"Debug - Using API key ending in: {api_key[-4:]}")
 
+    def get_available_keywords(self) -> List[str]:
+        """Get list of available keywords."""
+        return db_ops.get_available_keywords()
+    
     def _count_tokens(self, text: str) -> int:
         """Count tokens for a given text using Gemini's token counter."""
         try:
@@ -72,17 +76,13 @@ class CompetitiveAnalysisEngine:
             'timestamp': datetime.now()
         }
 
-    def analyze_llm_mentions(self, days: int = 1, test_keyword: str = "data catalog tools") -> Dict[str, Any]:
-        """Analyze patterns in LLM mentions with token-aware chunking."""
+    def analyze_llm_mentions(self, days: int = 1, selected_keyword: str = None) -> Dict[str, Any]:
+        """Analyze patterns in LLM mentions for a specific keyword.
         
-        # Debug section for API and configuration
-        # st.write("=== Debug Information ===")
-        # st.write(f"Model: {config.GEMINI_MODEL_NAME}")
-        # api_key = config.GEMINI_API_KEY
-        # st.write(f"API Key (last 4): ****{api_key[-4:]}")
-        
-        # Get data
-        st.write("\n2. Fetching Data...")
+        Args:
+            days: Number of days to analyze
+            selected_keyword: The specific keyword to analyze
+        """
         data = db_ops.get_llm_mention_patterns(days)
         
         if data.empty:
@@ -93,41 +93,39 @@ class CompetitiveAnalysisEngine:
                 'timestamp': datetime.now()
             }
         
-        # Filter for test keyword
-        data = data[data['keyword'] == test_keyword]
-        st.write(f"\nFiltered for keyword: '{test_keyword}'")
+        # Filter for selected keyword
+        if selected_keyword:
+            data = data[data['keyword'] == selected_keyword]
+            st.write(f"\nFiltered for keyword: '{selected_keyword}'")
+        else:
+            st.warning("No keyword selected")
+            return {
+                'analysis': "Please select a keyword to analyze",
+                'raw_data': data,
+                'timestamp': datetime.now()
+            }
         
         # Data inspection
         answer_columns = [col for col in data.columns if col.endswith('_answer')]
-        st.write("\n3. Data Statistics:")
         st.write(f"Total rows for keyword: {len(data)}")
         st.write(f"Answer columns: {answer_columns}")
         
         # Create analysis prompt
         prompt = f"""
-        Analyze these LLM responses for the keyword '{test_keyword}':
+        Analyze these LLM responses for the keyword '{selected_keyword}':
 
         {data[answer_columns].to_string()}
 
         Focus on:
-        1. How different models discuss Atlan
-        2. How different models discuss Atlan in comparison to companies and platforms mentioned. 
-        -- Be specific and use bullet points.
-        -- Talk about how this changes over time.
-        3. Key patterns in how these companies are mentioned
-        4. Context and sentiment of mentions
-        5. Compare responses across different models
-        6. Notable insights about the data catalog market
+        1. How different models discuss data catalog companies (Atlan, Alation, Collibra)
+        2. Key patterns in how these companies are mentioned
+        3. Context and sentiment of mentions
+        4. Compare responses across different models
+        5. Notable insights about the data catalog market
         """
         
-        # Check token count
-        token_count = self._count_tokens(prompt)
-        st.write(f"\nTotal tokens in prompt: {token_count}")
-        
         try:
-            st.write("\nAttempting analysis...")
             response = self.model.generate_content(prompt)
-            st.write("✓ Analysis successful")
             
             return {
                 'analysis': response.text,
