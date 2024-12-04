@@ -1,0 +1,18 @@
+[
+    {
+        "question": "How are we performing for data catalog keywords?",
+        "sql": "WITH latest_rankings AS (SELECT k.keyword, r.position, r.domain, r.check_date FROM keywords k JOIN rankings r ON k.id = r.keyword_id WHERE k.keyword LIKE '%data catalog%' AND r.check_date = (SELECT MAX(check_date) FROM rankings) ORDER BY r.position) SELECT keyword, position, domain, check_date, CASE WHEN position <= 10 THEN 'Top 10' WHEN position <= 20 THEN 'Top 20' WHEN position <= 50 THEN 'Top 50' ELSE 'Beyond Top 50' END as rank_category FROM latest_rankings",
+        "metadata": {
+            "type": "keyword_analysis",
+            "visualization": "bar_chart"
+        }
+    },
+    {
+        "question": "Show our top ranking keywords",
+        "sql": "WITH latest_rankings AS (SELECT k.keyword, r.position, r.domain, r.check_date FROM keywords k JOIN rankings r ON k.id = r.keyword_id WHERE r.domain = 'atlan.com' AND r.check_date = (SELECT MAX(check_date) FROM rankings) AND r.position <= 10 ORDER BY r.position) SELECT keyword, position, check_date FROM latest_rankings",
+        "metadata": {
+            "type": "ranking_analysis",
+            "visualization": "table"
+        }
+    }
+]

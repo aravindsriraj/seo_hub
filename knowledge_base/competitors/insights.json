@@ -1,0 +1,29 @@
+[
+    {
+        "competitor": "Alation",
+        "content": "Recently launched new AI features focusing on automated data stewardship and enhanced data quality scoring.",
+        "date": "2024-02-10",
+        "metadata": {
+            "type": "product_update",
+            "impact": "high"
+        }
+    },
+    {
+        "competitor": "Collibra",
+        "content": "Expanding market presence in healthcare sector with specific compliance-focused features.",
+        "date": "2024-01-25",
+        "metadata": {
+            "type": "market_strategy",
+            "impact": "medium"
+        }
+    },
+    {
+        "competitor": "Informatica",
+        "content": "Strengthening cloud-native capabilities and integration with major cloud data platforms.",
+        "date": "2024-02-05",
+        "metadata": {
+            "type": "product_strategy",
+            "impact": "medium"
+        }
+    }
+]

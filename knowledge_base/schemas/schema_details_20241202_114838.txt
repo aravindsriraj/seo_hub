@@ -1,0 +1,88 @@
+Database Schema Details (Generated on 2024-12-02 11:48:38)
+
+Schema for database: aimodels.db
+--------------------------------------------------
+
+Table: keyword_rankings
+  - keyword (TEXT)
+  - check_date (DATE)
+  - chatgpt_4o_answer (TEXT)
+  - chatgpt_4o_atlan_mention (BOOLEAN)
+  - gpt_4o_mini_answer (TEXT)
+  - gpt_4o_mini_atlan_mention (BOOLEAN)
+  - claude_3_5_haiku_answer (TEXT)
+  - claude_3_5_haiku_atlan_mention (BOOLEAN)
+  - gemini_1_5_flash_8b_answer (TEXT)
+  - gemini_1_5_flash_8b_atlan_mention (BOOLEAN)
+  - llama_3_1_70b_instruct_answer (TEXT)
+  - llama_3_1_70b_instruct_atlan_mention (BOOLEAN)
+  - llama_3_1_8b_instruct_answer (TEXT)
+  - llama_3_1_8b_instruct_atlan_mention (BOOLEAN)
+  - mistral_large_answer (TEXT)
+  - mistral_large_atlan_mention (BOOLEAN)
+  - mistral_nemo_answer (TEXT)
+  - mistral_nemo_atlan_mention (BOOLEAN)
+  - gemini_experimental_1121_answer (TEXT)
+  - gemini_experimental_1121_atlan_mention (BOOLEAN)
+  - google__learnlm_1_5_pro_experimental_answer (TEXT)
+  - google__learnlm_1_5_pro_experimental_atlan_mention (BOOLEAN)
+  - perplexity__llama_3_1_sonar_70b_online_answer (TEXT)
+  - perplexity__llama_3_1_sonar_70b_online_atlan_mention (BOOLEAN)
+
+Schema for database: rankings.db
+--------------------------------------------------
+
+Table: keywords
+  - id (INTEGER)
+  - keyword (TEXT)
+  - created_at (DATE)
+
+Table: sqlite_sequence
+  - name ()
+  - seq ()
+
+Table: rankings
+  - id (INTEGER)
+  - keyword_id (INTEGER)
+  - domain (TEXT)
+  - position (INTEGER)
+  - check_date (DATE)
+  - url (TEXT)
+
+Schema for database: url_tracker.db
+--------------------------------------------------
+
+Table: sitemap_tracking
+  - id (INTEGER)
+  - sitemap_url (TEXT)
+  - last_processed (TIMESTAMP)
+  - status (TEXT)
+
+Table: url_tracking
+  - id (INTEGER)
+  - url (TEXT)
+  - sitemap_url (TEXT)
+  - word_count (INTEGER)
+  - date_published (TIMESTAMP)
+  - date_modified (TIMESTAMP)
+  - last_checked (TIMESTAMP)
+  - status (TEXT)
+
+Schema for database: urls_analysis.db
+--------------------------------------------------
+
+Table: sqlite_sequence
+  - name ()
+  - seq ()
+
+Table: urls
+  - id (INTEGER)
+  - url (TEXT)
+  - domain_name (TEXT)
+  - status (TEXT)
+  - summary (TEXT)
+  - category (TEXT)
+  - primary_keyword (TEXT)
+  - estimated_word_count (INTEGER)
+  - datePublished (TEXT)
+  - dateModified (TEXT)

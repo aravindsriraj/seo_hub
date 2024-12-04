@@ -4,8 +4,8 @@ from seo_hub.data.operations import db_ops
 from seo_hub.ui.views import views
 from seo_hub.ui.components import metrics, progress
 from seo_hub.ui.qa_view import QAView
-from ui.sitemap_view import SitemapView
-
+from seo_hub.ui.sitemap_view import SitemapView
+from seo_hub.ui.seo_qa_view import SEOQAView
 
 def initialize_app():
     """Initialize the application and database connections."""
@@ -110,7 +110,8 @@ def main():
         "Insights",
         "Position Tracking",
         "LLM Tracker",
-        "Q&A"
+        "Q&A",
+        "SEO Intelligence"
     ])
     
     # Render each tab's content
@@ -131,6 +132,9 @@ def main():
 
     with tabs[5]: 
         views["qa"].render()
+    
+    with tabs[6]:
+        SEOQAView().render()
 
     # Add footer
     st.markdown("---")

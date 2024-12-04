@@ -1,10 +1,10 @@
+from datetime import datetime, timedelta
+import time
 import requests
 from bs4 import BeautifulSoup
 import json
 from urllib.parse import urlparse
 import google.generativeai as genai
-from datetime import datetime
-import time
 import streamlit as st
 from seo_hub.core.config import config
 
@@ -41,23 +41,27 @@ class WebScraper:
 
     def extract_dates_from_json_ld(self, soup):
         """Extract dates from JSON-LD script tags."""
-        dates = {'published': None, 'modified': None}
-        
-        for script in soup.find_all('script', type='application/ld+json'):
-            try:
-                data = json.loads(script.string)
-                if isinstance(data, list):
-                    data = data[0]
-                
-                if 'datePublished' in data:
-                    dates['published'] = data['datePublished']
-                if 'dateModified' in data:
-                    dates['modified'] = data['dateModified']
+        try:
+            for script in soup.find_all('script', type='application/ld+json'):
+                try:
+                    data = json.loads(script.string)
+                    # Handle both single object and array of objects
+                    if isinstance(data, list):
+                        data = data[0]
                     
-            except (json.JSONDecodeError, AttributeError):
-                continue
-                
-        return dates
+                    date_published = data.get('datePublished')
+                    date_modified = data.get('dateModified')
+                    
+                    if date_published or date_modified:
+                        return {
+                            'published': self.standardize_date(date_published) if date_published else None,
+                            'modified': self.standardize_date(date_modified) if date_modified else None
+                        }
+                except json.JSONDecodeError:
+                    continue
+        except Exception as e:
+            print(f"Error parsing JSON-LD: {e}")
+        return {'published': None, 'modified': None}
 
     def extract_dates_from_meta(self, soup):
         """Extract dates from meta tags."""
@@ -91,44 +95,46 @@ class WebScraper:
         """Convert various date formats to YYYY-MM-DD."""
         if not date_str:
             return None
-            
+        
         try:
-            for fmt in [
-                "%Y-%m-%dT%H:%M:%S%z",
-                "%Y-%m-%dT%H:%M:%S.%f%z",
-                "%Y-%m-%d %H:%M:%S",
-                "%Y-%m-%d",
-                "%B %d, %Y",
-                "%d/%m/%Y",
-                "%m/%d/%Y"
-            ]:
-                try:
-                    return datetime.strptime(date_str.strip(), fmt).strftime('%Y-%m-%d')
-                except ValueError:
-                    continue
-        except Exception:
+            # Remove timezone info if present
+            if 'T' in date_str:
+                date_str = date_str.split('T')[0]
+            
+            # Convert to datetime and then to string
+            return datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m-%d')
+            
+        except Exception as e:
+            print(f"Error standardizing date {date_str}: {e}")
             return None
-        return None
 
     def extract_content(self, url: str) -> dict:
-        """Extract content and metadata with improved date handling."""
+        """Extract content and metadata from URL."""
         try:
             response = requests.get(url, headers=self.headers, timeout=10)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # Extract dates from JSON-LD first, then meta tags
+            # First try JSON-LD
             dates = self.extract_dates_from_json_ld(soup)
-            if not any(dates.values()):
-                dates = self.extract_dates_from_meta(soup)
             
-            # Standardize dates
-            published = self.standardize_date(dates['published'])
-            modified = self.standardize_date(dates['modified'])
-            
-            # If only modified date is found, use it for published date
-            if modified and not published:
-                published = modified
+            # If no dates found in JSON-LD, try meta tags
+            if not dates['published'] and not dates['modified']:
+                published_meta = (
+                    soup.find('meta', {'property': ['article:published_time', 'og:published_time']}) or
+                    soup.find('meta', {'name': 'published_time'}) or
+                    soup.find('meta', {'name': 'date'}) or
+                    soup.find('meta', {'property': 'article:published'})
+                )
+                
+                modified_meta = (
+                    soup.find('meta', {'property': ['article:modified_time', 'og:modified_time']}) or
+                    soup.find('meta', {'name': 'modified_time'}) or
+                    soup.find('meta', {'name': 'last-modified'})
+                )
+                
+                dates['published'] = self.standardize_date(published_meta.get('content')) if published_meta else None
+                dates['modified'] = self.standardize_date(modified_meta.get('content')) if modified_meta else None
 
             # Clean content
             for element in soup(['script', 'style', 'nav', 'header', 'footer', 'aside']):
@@ -140,12 +146,13 @@ class WebScraper:
                 'domain_name': urlparse(url).netloc,
                 'content': text[:50000],
                 'estimated_word_count': len(text.split()),
-                'date_published': published,
-                'date_modified': modified or published,
+                'date_published': dates['published'],
+                'date_modified': dates['modified'] or dates['published'],
                 'status': 'Fetched'
             }
-
+                
         except Exception as e:
+            st.error(f"Error extracting content from {url}: {str(e)}")
             return {
                 'domain_name': urlparse(url).netloc,
                 'content': '',
@@ -154,7 +161,7 @@ class WebScraper:
                 'date_modified': None,
                 'status': 'Failed'
             }
-
+        
     def _get_url_data(self, url: str) -> dict:
         """Get URL data including last processed time."""
         import sqlite3
@@ -251,69 +258,71 @@ class WebScraper:
                     'status': 'Failed'  # Explicitly set to Failed
                 }
 
-    def process_url(self, url: str) -> dict:
-        """Process a URL with clear logic for processing vs skipping."""
-        # First check if URL exists and get its data
-        existing_data = self._get_url_data(url)
-        
-        # Extract current content and metadata
-        metadata = self.extract_content(url)
-        
-        # Determine if URL needs processing
-        needs_processing = False
-        skip_reason = None
-        
-        if not existing_data:
-            # New URL - needs processing
-            needs_processing = True
-            process_reason = "New URL"
-        elif existing_data['status'] == 'Pending':
-            # Pending status - needs processing
-            needs_processing = True
-            process_reason = "Status was Pending"
-        elif existing_data['status'] == 'Failed':
-            # Failed status - needs reprocessing
-            needs_processing = True
-            process_reason = "Previous attempt Failed"
-        elif metadata['date_modified'] and existing_data['dateModified']:
-            # Both dates available - check if changed
-            if metadata['date_modified'] != existing_data['dateModified']:
-                needs_processing = True
-                process_reason = "Content modified"
+    def process_url(self, url: str, sitemap_url: str = None) -> dict:
+        """Process URL and update both tracking and analysis databases."""
+        try:
+            print("\nPROCESSING URL:", url)
+            
+            # Step 1: Extract content and metadata
+            print("Step 1: Extracting content...")
+            metadata = self.extract_content(url)
+            
+            if metadata['content']:
+                print("Content extracted successfully")
+                print(f"Word count: {metadata.get('estimated_word_count')}")
+                print(f"Dates found - Published: {metadata.get('date_published')}, Modified: {metadata.get('date_modified')}")
+                
+                # Step 2: Get Gemini analysis
+                print("\nStep 2: Getting Gemini analysis...")
+                analysis = self.analyze_with_gemini(metadata['content'], url)
+                print("Analysis completed")
+                
+                # Step 3: Update url_tracker.db
+                print("\nStep 3: Updating URL tracker database...")
+                tracking_success = self.url_tracker.update_url(
+                    url=url,
+                    sitemap_url=sitemap_url,
+                    word_count=metadata.get('estimated_word_count', 0),
+                    date_published=metadata.get('date_published'),
+                    date_modified=metadata.get('date_modified')
+                )
+                print(f"Tracking database update: {'Success' if tracking_success else 'Failed'}")
+                
+                # Step 4: Update urls_analysis.db
+                print("\nStep 4: Updating analysis database...")
+                print("Inserting URL into analysis database...")
+                analysis_insert = db_ops.insert_urls([(url, metadata['domain_name'])])
+                print(f"URL insert result: {analysis_insert}")
+                
+                print("Updating with analysis results...")
+                analysis_success = db_ops.update_url_analysis(
+                    url_id=analysis_insert,
+                    summary=analysis.get('summary', 'N/A'),
+                    category=analysis.get('category', 'Other'),
+                    primary_keyword=analysis.get('primary_keyword', 'N/A'),
+                    status='Processed'
+                )
+                print(f"Analysis database update: {'Success' if analysis_success else 'Failed'}")
+                
+                return {
+                    'status': 'processed',
+                    'tracking_success': tracking_success,
+                    'analysis_success': analysis_success
+                }
+                
             else:
-                skip_reason = "Content unchanged"
-        else:
-            # Can't determine if changed - skip if already processed
-            if existing_data['status'] == 'Processed':
-                skip_reason = "Already processed"
-            else:
-                needs_processing = True
-                process_reason = "Status not Processed"
-        
-        # If we should skip, return existing data
-        if not needs_processing:
+                print("No content could be extracted")
+                return {
+                    'status': 'failed',
+                    'error': 'No content extracted'
+                }
+                
+        except Exception as e:
+            print(f"Error processing URL: {str(e)}")
             return {
-                **metadata,
-                'status': existing_data['status'],
-                'summary': existing_data['summary'],
-                'category': existing_data['category'],
-                'primary_keyword': existing_data['primary_keyword'],
-                'skip_update': True,
-                'skip_reason': skip_reason
+                'status': 'failed',
+                'error': str(e)
             }
-        
-        # If content extraction failed
-        if not metadata['content']:
-            metadata['status'] = 'Failed'
-            return metadata
-        
-        # Process with Gemini
-        analysis = self.analyze_with_gemini(metadata['content'], url)
-        metadata.update(analysis)
-        metadata['process_reason'] = process_reason
-        
-        return metadata
-
     def process_urls(self, urls: list) -> dict:
         """Process URLs with clean, concise status display."""
         total_urls = len(urls)

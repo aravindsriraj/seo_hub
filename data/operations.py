@@ -60,23 +60,35 @@ class DatabaseOperations:
         conn.close()
         return total_rows, status_counts, domain_counts
 
-    def insert_urls(self, urls: List[Tuple[str, str]]) -> None:
-        """Insert new URLs into the database."""
-        conn = self.get_connection(config.URLS_DB_PATH)
-        cursor = conn.cursor()
-        
-        for url, domain_name in urls:
-            cursor.execute('SELECT COUNT(*) FROM urls WHERE url = ?', (url,))
-            exists = cursor.fetchone()[0]
+    def insert_urls(self, urls: List[Tuple[str, str]]) -> Optional[int]:
+        """Insert new URLs and return the last inserted ID."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
             
-            if exists == 0:
-                cursor.execute(
-                    'INSERT INTO urls (url, domain_name, status) VALUES (?, ?, ?)',
-                    (url, domain_name, 'Pending')
-                )
+            last_id = None
+            for url, domain_name in urls:
+                cursor.execute("""
+                    INSERT INTO urls (url, domain_name, status)
+                    VALUES (?, ?, 'Pending')
+                    ON CONFLICT(url) DO UPDATE SET
+                        domain_name=excluded.domain_name,
+                        status='Pending'
+                """, (url, domain_name))
+                
+                cursor.execute("SELECT id FROM urls WHERE url = ?", (url,))
+                result = cursor.fetchone()
+                if result:
+                    last_id = result[0]
+            
+            conn.commit()
+            return last_id
         
-        conn.commit()
-        conn.close()
+        except Exception as e:
+            st.error(f"Error inserting URLs: {str(e)}")
+            if 'conn' in locals():
+                conn.close()
+            return None
 
     def get_pending_urls(self, limit: int = 450) -> List[Tuple]:
         """Get a batch of pending URLs for processing."""
@@ -94,20 +106,43 @@ class DatabaseOperations:
         conn.close()
         return urls
 
-    def update_url_analysis(self, url_id: int, summary: str, category: str, 
-                          primary_keyword: str, status: str = 'Processed') -> None:
-        """Update URL analysis results."""
-        conn = self.get_connection(config.URLS_DB_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            UPDATE urls 
-            SET status = ?, summary = ?, category = ?, primary_keyword = ? 
-            WHERE id = ?
-        ''', (status, summary, category, primary_keyword, url_id))
-        
-        conn.commit()
-        conn.close()
+    def update_url_analysis(self, url_id: Optional[int], summary: str, category: str, primary_keyword: str, status: str = 'Processed') -> bool:
+        """Update URL analysis results in urls_analysis.db."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            if url_id is None:
+                # Get the last inserted URL ID
+                cursor.execute("SELECT MAX(id) FROM urls")
+                result = cursor.fetchone()
+                url_id = result[0] if result else None
+                
+                if not url_id:
+                    st.error("No URL ID found for analysis update")
+                    return False
+            
+            # Update with current timestamp
+            cursor.execute("""
+                UPDATE urls 
+                SET status = ?,
+                    summary = ?,
+                    category = ?,
+                    primary_keyword = ?,
+                    last_analyzed = CURRENT_TIMESTAMP,
+                    analysis_version = '1.0'
+                WHERE id = ?
+            """, (status, summary, category, primary_keyword, url_id))
+            
+            conn.commit()
+            conn.close()
+            return True
+            
+        except Exception as e:
+            st.error(f"Error updating URL analysis: {str(e)}")
+            if 'conn' in locals():
+                conn.close()
+            return False
 
     def get_content_age_data(self) -> pd.DataFrame:
         """Get content age and related metrics."""
@@ -581,7 +616,7 @@ class DatabaseOperations:
         cursor.execute('''
             SELECT domain_name, url, datePublished
             FROM urls
-            WHERE datePublished >= date('now', '-7 days')
+            WHERE datePublished >= date('now', '-14 days')
         ''')
         
         data = cursor.fetchall()
@@ -626,7 +661,7 @@ class DatabaseOperations:
         cursor.execute('''
             SELECT domain_name, url, dateModified, datePublished
             FROM urls
-            WHERE dateModified >= date('now', '-7 days')
+            WHERE dateModified >= date('now', '-14 days')
             AND dateModified != datePublished
             AND dateModified IS NOT NULL
             ORDER BY dateModified DESC

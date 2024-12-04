@@ -8,10 +8,9 @@ def extract_urls_from_xml(xml_url):
     """
     try:
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-        response = requests.get(xml_url, headers=headers)
+        response = requests.get(xml_url.strip(), headers=headers)
         if response.status_code == 200:
             xml_content = response.content
             tree = ET.ElementTree(ET.fromstring(xml_content))
@@ -19,12 +18,19 @@ def extract_urls_from_xml(xml_url):
             
             # Handle namespaces
             namespace = {'ns': root.tag.split('}')[0].strip('{')} if '}' in root.tag else {}
-            urls = [elem.text for elem in root.findall(".//ns:loc", namespace)]
+            urls = []
+            
+            # Extract and clean URLs
+            for elem in root.findall(".//ns:loc", namespace):
+                if elem.text:
+                    clean_url = elem.text.strip()
+                    if clean_url:
+                        urls.append(clean_url)
             
             return urls
         else:
-            print(f"Failed to fetch XML. HTTP status code: {response.status_code}")
+            st.error(f"Failed to fetch XML. HTTP status code: {response.status_code}")
             return []
     except Exception as e:
-        print(f"Error parsing XML: {e}")
+        st.error(f"Error parsing XML: {e}")
         return []

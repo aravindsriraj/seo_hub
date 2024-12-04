@@ -1,0 +1,29 @@
+[
+    {
+        "content": "Data catalogs are increasingly integrating AI capabilities for automated metadata extraction and advanced data discovery.",
+        "source": "Gartner Research",
+        "date": "2024-01-15",
+        "metadata": {
+            "category": "product_evolution",
+            "relevance": "high"
+        }
+    },
+    {
+        "content": "Organizations are prioritizing active metadata management over passive data cataloging to support real-time data governance.",
+        "source": "Forrester Wave",
+        "date": "2024-02-01",
+        "metadata": {
+            "category": "market_shift",
+            "relevance": "high"
+        }
+    },
+    {
+        "content": "Data mesh architecture is driving demand for decentralized data discovery and governance solutions.",
+        "source": "Industry Analysis",
+        "date": "2024-01-20",
+        "metadata": {
+            "category": "architecture_trends",
+            "relevance": "medium"
+        }
+    }
+]

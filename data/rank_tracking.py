@@ -9,6 +9,8 @@ import sqlite3
 import os
 from dotenv import load_dotenv
 
+print ({os.getcwd()})
+
 # Load environment variables
 load_dotenv()
 
@@ -212,12 +214,14 @@ def display_today_rankings():
 
 if __name__ == "__main__":
     # Check if keywords.csv exists
-    if not os.path.exists("keywords_for_ranking.csv"):
-        print("Please create a keywords.csv file with a 'keyword' column")
+    KEYWORDS_CSV = "ranking.csv"    
+    
+    if not os.path.exists(KEYWORDS_CSV):
+        print("Please create a keywords_for_ranking.csv file with a 'keyword' column")
         exit(1)
     
     # Process keywords
-    process_keywords("keywords_for_ranking.csv")
+    process_keywords("ranking.csv")
     
     # Display results
     print("\nToday's Rankings:")
