@@ -3,8 +3,8 @@ import streamlit as st
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 import google.generativeai as genai
-from ..core.config import config
-from ..data.operations import db_ops
+from core.config import config
+from data.operations import db_ops
 
 class CompetitiveAnalysisEngine:
     """Engine for analyzing competitive intelligence data."""
@@ -31,24 +31,39 @@ class CompetitiveAnalysisEngine:
     def analyze_content_updates(self, days: int = 1) -> Dict[str, Any]:
         """Analyze recent content updates from competitors."""
         data = db_ops.get_recent_content_updates(days)
-        
+        # end_date = datetime.now()
+        # start_date = end_date - timedelta(days=days)
+        # data = db_ops.get_recent_content_updates(start_date, end_date)
+
         prompt = f"""
-        Analyze these content updates from competitors in the past {days} days:
+        Analyze these content updates from competitors in the past {days} days. 
+        
+        Instructions: 
+        1. Make 2 lists - 1/ articles published during this timeperiod, 2/ articles that were published before this timeframe but modified. Ignore high level company pages like about us, careers etc.
+        2. If the datePublished & dateModified are same, consider it to be published in this time frame. You don't have to call this out.
+        2. Domain_name column is indicative of the company. It could be a subdomain also.
+        3. If some columns have empty values, ignore them for now.
+        
         {data.to_string()}
-        
-        Consider:
-        1. What topics are they focusing on?
-        2. How does this differ from their historical patterns?
-        3. Are there any notable changes in their content strategy?
-        4. What might be the strategic implications for Atlan?
-        
-        Provide insights and potential action items.
+
+        Share a comprehensive answer for the following::
+
+        1. Share a high level comprehensive summary.
+        2. What content got published during this period? Share a bullet list (with hyperlinks).
+        3. What has the content focus of the recently published content?
+        4. How many pages did they modify? What are these pages. Share a bullet list (with hyperlinks).
+        5. Is there a common pattern between companies in terms of content published or modified during this period of observation?
+        6. How does this differ from their historical patterns?
+        7. Are there any notable changes in their content strategy?
+
+        Double check your analysis before sharing
+
         """
         
         response = self.model.generate_content(prompt)
         return {
             'analysis': response.text,
-            'raw_data': data,
+            'raw_data': data, 
             'timestamp': datetime.now()
         }
 
@@ -58,15 +73,14 @@ class CompetitiveAnalysisEngine:
         
         prompt = f"""
         Analyze these ranking changes from the past {days} days:
+
         {data.to_string()}
         
         Consider:
         1. What significant position changes occurred?
         2. How did Atlan's movements compare to competitors?
-        3. Are there patterns in keyword clusters?
-        4. What might be causing these changes?
-        
-        Provide insights and potential action items.
+        3. Where did Atlan gain ranking? Where did Atlan lose ranking?
+        4. Are there patterns in keyword clusters?
         """
         
         response = self.model.generate_content(prompt)
@@ -117,16 +131,15 @@ class CompetitiveAnalysisEngine:
         {data[answer_columns].to_string()}
 
         Focus on:
-        1. How different models discuss data catalog companies (Atlan, Alation, Collibra)
+        1. How different models discuss companies with respect to this search query
         2. Key patterns in how these companies are mentioned
-        3. Context and sentiment of mentions
-        4. Compare responses across different models
-        5. Notable insights about the data catalog market
+        3. Context and sentiment of mentions of different companies
+        4. What is Atlan's share of voice in these responses compared to similar companies?
         """
         
         try:
             response = self.model.generate_content(prompt)
-            
+            print("test")
             return {
                 'analysis': response.text,
                 'raw_data': data,
@@ -210,29 +223,29 @@ class CompetitiveAnalysisEngine:
     #             },
     #             'timestamp': datetime.now()
     #         }    
-    def analyze_content_updates(self, days: int = 1) -> Dict[str, Any]:
-        """Analyze recent content updates from competitors."""
-        data = db_ops.get_recent_content_updates(days)
+    # def analyze_content_updates(self, days: int = 1) -> Dict[str, Any]:
+    #     """Analyze recent content updates from competitors."""
+    #     data = db_ops.get_recent_content_updates(days)
         
-        prompt = f"""
-        Analyze these content updates from competitors in the past {days} days:
-        {data.to_string()}
+    #     prompt = f"""
+    #     Analyze these content updates from competitors in the past {days} days:
+    #     {data.to_string()}
         
-        Consider:
-        1. What topics are they focusing on?
-        2. How does this differ from their historical patterns?
-        3. Are there any notable changes in their content strategy?
-        4. What might be the strategic implications for Atlan?
+    #     Consider:
+    #     1. What topics are they focusing on?
+    #     2. How does this differ from their historical patterns?
+    #     3. Are there any notable changes in their content strategy?
+    #     4. What might be the strategic implications for Atlan?
         
-        Provide insights and potential action items.
-        """
+    #     Provide insights and potential action items.
+    #     """
         
-        response = self.model.generate_content(prompt)
-        return {
-            'analysis': response.text,
-            'raw_data': data,
-            'timestamp': datetime.now()
-    }
+    #     response = self.model.generate_content(prompt)
+    #     return {
+    #         'analysis': response.text,
+    #         'raw_data': data,
+    #         'timestamp': datetime.now()
+    # }
 
     def _chunk_dataframe(self, df: pd.DataFrame, base_prompt: str, max_tokens: int = 100000) -> List[pd.DataFrame]:
         """

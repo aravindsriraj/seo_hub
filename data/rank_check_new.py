@@ -80,6 +80,7 @@ class RankTracker:
         
         conn.commit()
         conn.close()
+        logging.info("Database tables created/verified")
 
     def extract_domain(self, url: str) -> str:
         """Extract main domain from URL."""
@@ -118,7 +119,11 @@ class RankTracker:
         """Read keywords from CSV file."""
         try:
             df = pd.read_csv(filepath)
-            return df['keyword'].unique().tolist()
+            if 'keyword' not in df.columns:
+                raise ValueError("CSV must contain 'keyword' column")
+            keywords = df['keyword'].unique().tolist()
+            logging.info(f"Loaded {len(keywords)} unique keywords from CSV")
+            return keywords
         except Exception as e:
             logging.error(f"CSV error: {str(e)}")
             return []
@@ -138,4 +143,176 @@ class RankTracker:
         """Process keywords with progress tracking."""
         self.create_tables()
         self.conn = sqlite3.connect(DB_PATH)
-        self.cursor
+        self.cursor = self.conn.cursor()
+
+        try:
+            keywords = self.read_keywords_from_csv(filepath)
+            if not keywords:
+                logging.error("No keywords found to process")
+                return
+
+            today = datetime.now().date()
+            remaining_keywords = [k for k in keywords if k not in self.progress]
+            
+            print(f"\nTotal keywords: {len(keywords)}")
+            print(f"Already processed: {len(keywords) - len(remaining_keywords)}")
+            print(f"Remaining to process: {len(remaining_keywords)}\n")
+            
+            with tqdm(total=len(remaining_keywords), desc="Processing Keywords") as pbar:
+                for keyword in remaining_keywords:
+                    try:
+                        keyword_id = self.get_or_create_keyword_id(keyword)
+                        
+                        # Search progress indicator
+                        tqdm.write(f"\nSearching: {keyword}")
+                        results = self.search_google(keyword)
+
+                        if results:
+                            for position, result in enumerate(results, 1):
+                                domain = self.extract_domain(result.get('link', ''))
+                                self.cursor.execute("""
+                                    INSERT INTO rankings (keyword_id, domain, position, check_date, url)
+                                    VALUES (?, ?, ?, ?, ?)
+                                """, (keyword_id, domain, position, today, result.get('link', '')))
+
+                            self.conn.commit()
+                            self.save_progress(keyword)
+                            tqdm.write(f"✓ Saved {len(results)} rankings for: {keyword}")
+                        else:
+                            tqdm.write(f"⚠ No results found for: {keyword}")
+
+                        pbar.update(1)
+
+                    except Exception as e:
+                        logging.error(f"Error processing {keyword}: {str(e)}")
+                        tqdm.write(f"⚠ Error processing: {keyword}")
+                        self.conn.rollback()
+                        continue
+
+        finally:
+            if self.conn:
+                self.conn.close()
+
+    def display_rankings_summary(self):
+        """Display comprehensive ranking summary."""
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("SELECT MAX(check_date) FROM rankings")
+            latest_date = cursor.fetchone()[0]
+
+            if not latest_date:
+                print("\nNo rankings data found")
+                return
+
+            print(f"\nRankings Summary for {latest_date}")
+            print("=" * 50)
+
+            # Overall statistics
+            cursor.execute("""
+                WITH LatestRankings AS (
+                    SELECT k.keyword, r.position, r.domain, r.url
+                    FROM keywords k
+                    JOIN rankings r ON k.id = r.keyword_id
+                    WHERE r.check_date = ?
+                )
+                SELECT 
+                    COUNT(CASE WHEN position <= 3 THEN 1 END) as top_3,
+                    COUNT(CASE WHEN position BETWEEN 4 AND 10 THEN 1 END) as top_4_10,
+                    ROUND(AVG(position), 1) as avg_position,
+                    COUNT(DISTINCT keyword) as total_keywords,
+                    COUNT(DISTINCT domain) as unique_domains
+                FROM LatestRankings
+            """, (latest_date,))
+
+            summary = cursor.fetchone()
+            print("\nOverall Statistics:")
+            print("-" * 20)
+            print(f"Total Keywords Tracked: {summary[3]}")
+            print(f"Keywords in Top 3: {summary[0]}")
+            print(f"Keywords in Positions 4-10: {summary[1]}")
+            print(f"Average Position: {summary[2]}")
+            print(f"Unique Domains: {summary[4]}")
+
+            # Top performing domains
+            print("\nTop Performing Domains:")
+            print("-" * 20)
+            cursor.execute("""
+                WITH LatestRankings AS (
+                    SELECT k.keyword, r.position, r.domain
+                    FROM keywords k
+                    JOIN rankings r ON k.id = r.keyword_id
+                    WHERE r.check_date = ?
+                )
+                SELECT 
+                    domain,
+                    COUNT(*) as appearances,
+                    ROUND(AVG(position), 1) as avg_position,
+                    COUNT(CASE WHEN position <= 3 THEN 1 END) as top_3_count
+                FROM LatestRankings
+                GROUP BY domain
+                HAVING appearances > 1
+                ORDER BY avg_position ASC
+                LIMIT 5
+            """, (latest_date,))
+
+            for domain, apps, avg_pos, top_3 in cursor.fetchall():
+                print(f"\nDomain: {domain}")
+                print(f"  Total Appearances: {apps}")
+                print(f"  Average Position: {avg_pos}")
+                print(f"  Keywords in Top 3: {top_3}")
+
+            print("\nDetailed report saved to ranking_summary.log")
+            
+            # Save detailed report to file
+            with open('ranking_summary.log', 'w') as f:
+                f.write(f"Ranking Summary Report - {latest_date}\n")
+                f.write("=" * 50 + "\n\n")
+                
+                cursor.execute("""
+                    SELECT k.keyword, r.position, r.domain, r.url
+                    FROM keywords k
+                    JOIN rankings r ON k.id = r.keyword_id
+                    WHERE r.check_date = ?
+                    ORDER BY k.keyword, r.position
+                """, (latest_date,))
+                
+                current_keyword = None
+                for keyword, position, domain, url in cursor.fetchall():
+                    if keyword != current_keyword:
+                        f.write(f"\nKeyword: {keyword}\n")
+                        current_keyword = keyword
+                    f.write(f"  {position}. {domain} - {url}\n")
+
+        finally:
+            conn.close()
+
+if __name__ == "__main__":
+    # Check if keywords.csv exists
+    KEYWORDS_CSV = "ranking.csv"
+    
+    if not os.path.exists(KEYWORDS_CSV):
+        print("Error: Please create a ranking.csv file with a 'keyword' column")
+        exit(1)
+    
+    try:
+        # Initialize and run tracker
+        print("\nInitializing rank tracking process...")
+        tracker = RankTracker()
+        
+        # Process keywords
+        print("\nStarting keyword processing...")
+        tracker.process_keywords(KEYWORDS_CSV)
+        
+        # Display final summary
+        print("\nGenerating ranking summary...")
+        tracker.display_rankings_summary()
+        
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user. Progress has been saved.")
+        print("Run the script again to resume from the last processed keyword.")
+    except Exception as e:
+        print(f"\nAn error occurred: {str(e)}")
+        logging.error(f"Fatal error: {str(e)}")
+        print("Check rank_tracking.log for details.")

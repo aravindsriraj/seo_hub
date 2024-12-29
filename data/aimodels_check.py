@@ -12,7 +12,7 @@ load_dotenv()
 
 # Constants
 DB_PATH = "aimodels.db"
-MODELS_JSON = "models.json"
+MODELS_JSON = "../models.json"
 KEYWORDS_CSV = "keywords.csv"
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"

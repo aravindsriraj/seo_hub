@@ -5,8 +5,8 @@ import xml.etree.ElementTree as ET
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
-from ..core.config import config
-from ..data.operations import db_ops
+from core.config import config
+from data.operations import db_ops
 
 class URLService:
     """Handles URL processing and content analysis."""

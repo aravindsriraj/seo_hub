@@ -1,20 +1,21 @@
 import sqlite3
 import pandas as pd
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Dict, Tuple, Any, Optional, Union
-from seo_hub.core.config import config
+from core.config import config
 
 
 class DatabaseOperations:
     """Handles all database operations for the SEO Hub application."""
 
     @staticmethod
-    def get_connection(db_path: str) -> sqlite3.Connection:
+    def get_connection(db_path: str="urls_analysis.db") -> sqlite3.Connection:
         """Create a database connection."""
         return sqlite3.connect(db_path)
 
     # ====================== URL Database Operations ======================
+
     def setup_urls_database(self) -> bool:
         """Initialize the URLs database with required tables."""
         if not config.check_database_exists(config.URLS_DB_PATH):
@@ -23,10 +24,11 @@ class DatabaseOperations:
         conn = self.get_connection(config.URLS_DB_PATH)
         cursor = conn.cursor()
         
+        # Main URLs table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS urls (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                url TEXT NOT NULL,
+                url TEXT NOT NULL UNIQUE,
                 domain_name TEXT NOT NULL,
                 status TEXT NOT NULL,
                 summary TEXT,
@@ -35,7 +37,29 @@ class DatabaseOperations:
                 word_count INTEGER,
                 estimated_word_count INTEGER,
                 datePublished TEXT,
-                dateModified TEXT
+                dateModified TEXT,
+                last_analyzed TIMESTAMP,
+                analysis_version TEXT
+            )
+        ''')
+        
+        # Create index for common queries
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_urls_domain_date 
+            ON urls(domain_name, datePublished, dateModified)
+        ''')
+        
+        # Create content history table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS url_content_changes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url_id INTEGER,
+                change_date TIMESTAMP,
+                field_changed TEXT,
+                old_value TEXT,
+                new_value TEXT,
+                word_count_delta INTEGER,
+                FOREIGN KEY (url_id) REFERENCES urls(id)
             )
         ''')
         
@@ -68,27 +92,34 @@ class DatabaseOperations:
             
             last_id = None
             for url, domain_name in urls:
-                cursor.execute("""
-                    INSERT INTO urls (url, domain_name, status)
-                    VALUES (?, ?, 'Pending')
-                    ON CONFLICT(url) DO UPDATE SET
-                        domain_name=excluded.domain_name,
-                        status='Pending'
-                """, (url, domain_name))
-                
-                cursor.execute("SELECT id FROM urls WHERE url = ?", (url,))
-                result = cursor.fetchone()
-                if result:
-                    last_id = result[0]
+                try:
+                    cursor.execute("""
+                        # Insert new URL, or update domain if URL already exists
+                        INSERT INTO urls (url, domain_name, status)
+                        VALUES (?, ?, 'pending')
+                        ON CONFLICT(url) DO UPDATE SET
+                            domain_name = excluded.domain_name
+                        RETURNING id
+                    """, (url, domain_name))
+                    
+                    result = cursor.fetchone()
+                    if result:
+                        last_id = result[0]
+                except sqlite3.IntegrityError:
+                    # Get existing URL ID
+                    cursor.execute("SELECT id FROM urls WHERE url = ?", (url,))
+                    result = cursor.fetchone()
+                    if result:
+                        last_id = result[0]
             
             conn.commit()
             return last_id
-        
+            
         except Exception as e:
             st.error(f"Error inserting URLs: {str(e)}")
-            if 'conn' in locals():
-                conn.close()
             return None
+        finally:
+            conn.close()
 
     def get_pending_urls(self, limit: int = 450) -> List[Tuple]:
         """Get a batch of pending URLs for processing."""
@@ -106,44 +137,65 @@ class DatabaseOperations:
         conn.close()
         return urls
 
-    def update_url_analysis(self, url_id: Optional[int], summary: str, category: str, primary_keyword: str, status: str = 'Processed') -> bool:
-        """Update URL analysis results in urls_analysis.db."""
-        try:
-            conn = self.get_connection(config.URLS_DB_PATH)
-            cursor = conn.cursor()
+    # def update_url_analysis(self, url_id: Optional[int], url: str, summary: str,  # Added url parameter
+    #                     category: str, primary_keyword: str, 
+    #                     status: str = 'Processed',
+    #                     estimated_word_count: int = None) -> bool:
+    #     """Update URL analysis results with change tracking."""
+    #     try:
+    #         conn = self.get_connection(config.URLS_DB_PATH)
+    #         cursor = conn.cursor()
             
-            if url_id is None:
-                # Get the last inserted URL ID
-                cursor.execute("SELECT MAX(id) FROM urls")
-                result = cursor.fetchone()
-                url_id = result[0] if result else None
+    #         print(f"Attempting to update analysis for URL: {url}")  # Debug
+            
+    #         current_time = datetime.now().isoformat()
+            
+    #         if url_id is None:
+    #             # Get ID for specific URL instead of MAX
+    #             cursor.execute("SELECT id FROM urls WHERE url = ?", (url,))
+    #             result = cursor.fetchone()
+    #             url_id = result[0] if result else None
+    #             print(f"Retrieved URL ID: {url_id} for URL: {url}")  # Debug
                 
-                if not url_id:
-                    st.error("No URL ID found for analysis update")
-                    return False
+    #             if not url_id:
+    #                 print(f"No URL ID found for: {url}")  # Debug
+    #                 return False
             
-            # Update with current timestamp
-            cursor.execute("""
-                UPDATE urls 
-                SET status = ?,
-                    summary = ?,
-                    category = ?,
-                    primary_keyword = ?,
-                    last_analyzed = CURRENT_TIMESTAMP,
-                    analysis_version = '1.0'
-                WHERE id = ?
-            """, (status, summary, category, primary_keyword, url_id))
+    #         # Get current values for change tracking
+    #         cursor.execute("""
+    #             SELECT summary, category, primary_keyword, estimated_word_count
+    #             FROM urls WHERE id = ?
+    #         """, (url_id,))
+    #         current = cursor.fetchone()
+    #         print(f"Current values for URL ID {url_id}: {current}")  # Debug
             
-            conn.commit()
-            conn.close()
-            return True
+    #         # Update main record
+    #         print(f"Updating record with: status={status}, summary={summary[:50]}...")  # Debug
+    #         cursor.execute("""
+    #             UPDATE urls 
+    #             SET status = ?,
+    #                 summary = ?,
+    #                 category = ?,
+    #                 primary_keyword = ?,
+    #                 estimated_word_count = ?,
+    #                 last_analyzed = ?,
+    #                 analysis_version = ?
+    #             WHERE id = ?
+    #         """, (status, summary, category, primary_keyword, 
+    #             estimated_word_count, current_time, '1.0', url_id))
             
-        except Exception as e:
-            st.error(f"Error updating URL analysis: {str(e)}")
-            if 'conn' in locals():
-                conn.close()
-            return False
-
+    #         rows_affected = cursor.rowcount
+    #         print(f"Rows affected by update: {rows_affected}")  # Debug
+            
+    #         conn.commit()
+    #         return True
+                
+    #     except Exception as e:
+    #         print(f"Error in update_url_analysis: {str(e)}")  # Debug
+    #         return False
+    #     finally:
+    #         conn.close()
+ 
     def get_content_age_data(self) -> pd.DataFrame:
         """Get content age and related metrics."""
         conn = self.get_connection(config.URLS_DB_PATH)
@@ -181,18 +233,117 @@ class DatabaseOperations:
         conn.close()
         return df
 
-
-
     # ====================== Rankings Database Operations ======================
-    def get_ranking_data(self, keywords: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
-        """Get ranking data for specified keywords and date range."""
+    # def get_ranking_data(self, keywords: List[str], start_date: datetime, end_date: datetime) -> pd.DataFrame:
+    #     """Get ranking data for specified keywords and date range."""
+    #     try:
+    #         conn = self.get_connection(config.RANKINGS_DB_PATH)
+            
+    #         # Create placeholders for SQL IN clause
+    #         placeholders = ','.join(['?' for _ in keywords])
+            
+    #         query = f"""
+    #         SELECT 
+    #             k.keyword,
+    #             r.check_date,
+    #             r.position,
+    #             r.domain,
+    #             r.url
+    #         FROM keywords k
+    #         JOIN rankings r ON k.id = r.keyword_id
+    #         WHERE k.keyword IN ({placeholders})
+    #         AND r.check_date BETWEEN ? AND ?
+    #         ORDER BY k.keyword, r.check_date, r.position
+    #         """
+            
+    #         # Combine all parameters
+    #         params = keywords + [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
+            
+    #         df = pd.read_sql_query(query, conn, params=params)
+    #         conn.close()
+    #         return df
+            
+    #     except Exception as e:
+    #         st.error(f"Error fetching ranking data: {str(e)}")
+    #         return pd.DataFrame()
+
+    # def get_ranking_data(
+    #     self,
+    #     keywords: Optional[List[str]] = None,
+    #     domains: Optional[List[str]] = None,
+    #     position_range: Optional[Tuple[int, int]] = None,
+    #     date_range: Optional[Tuple[datetime, datetime]] = None
+    # ) -> pd.DataFrame:
+    #     """Fetch ranking data with filtering options."""
+    #     try:
+    #         conn = self.get_connection(config.RANKINGS_DB_PATH)
+            
+    #         query = """
+    #         SELECT r.*, k.keyword 
+    #         FROM rankings r
+    #         JOIN keywords k ON r.keyword_id = k.id
+    #         WHERE 1=1
+    #         """
+    #         params = []
+
+    #         if keywords:
+    #             query += " AND k.keyword IN ({})".format(",".join("?" * len(keywords)))
+    #             params.extend(keywords)
+
+    #         if domains:
+    #             query += " AND r.domain IN ({})".format(",".join("?" * len(domains)))
+    #             params.extend(domains)
+
+    #         if position_range:
+    #             query += " AND r.position BETWEEN ? AND ?"
+    #             params.extend(position_range)
+
+    #         if date_range and date_range[0] and date_range[1]:
+    #             query += " AND r.check_date BETWEEN ? AND ?"
+    #             params.extend([date_range[0].isoformat(), date_range[1].isoformat()])
+
+    #         df = pd.read_sql_query(query, conn, params=params)
+    #         conn.close()
+    #         return df
+
+    #     except Exception as e:
+    #         st.error(f"Error fetching ranking data: {str(e)}")
+    #         return pd.DataFrame()
+
+    def get_ranking_data(
+        self, 
+        keywords: Optional[List[str]] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        domains: Optional[List[str]] = None,
+        position_range: Optional[Tuple[int, int]] = None,
+        date_range: Optional[Tuple[date, date]] = None  # Added for compatibility
+    ) -> pd.DataFrame:
+        """Get ranking data with flexible date handling.
+        
+        Args:
+            keywords: Optional list of keywords to filter by
+            start_date: Optional explicit start date
+            end_date: Optional explicit end date
+            domains: Optional list of domains to filter by
+            position_range: Optional tuple of (min_position, max_position)
+            date_range: Optional tuple of (start_date, end_date) - alternative to start_date/end_date
+        """
         try:
             conn = self.get_connection(config.RANKINGS_DB_PATH)
             
-            # Create placeholders for SQL IN clause
-            placeholders = ','.join(['?' for _ in keywords])
+            # Handle date parameters
+            if date_range and len(date_range) == 2:
+                start_date = date_range[0]
+                end_date = date_range[1]
             
-            query = f"""
+            if not start_date or not end_date:
+                # Default to last 90 days if no dates provided
+                end_date = datetime.now().date()
+                start_date = end_date - timedelta(days=90)
+            
+            # Build query
+            query = """
             SELECT 
                 k.keyword,
                 r.check_date,
@@ -201,18 +352,37 @@ class DatabaseOperations:
                 r.url
             FROM keywords k
             JOIN rankings r ON k.id = r.keyword_id
-            WHERE k.keyword IN ({placeholders})
-            AND r.check_date BETWEEN ? AND ?
-            ORDER BY k.keyword, r.check_date, r.position
+            WHERE 1=1
             """
-            
-            # Combine all parameters
-            params = keywords + [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
+            params = []
+
+            # Add filters
+            if keywords:
+                query += f" AND k.keyword IN ({','.join(['?' for _ in keywords])})"
+                params.extend(keywords)
+
+            query += " AND r.check_date BETWEEN ? AND ?"
+            params.extend([start_date.isoformat(), end_date.isoformat()])
+
+            if domains:
+                query += f" AND r.domain IN ({','.join(['?' for _ in domains])})"
+                params.extend(domains)
+
+            if position_range and len(position_range) == 2:
+                query += " AND r.position BETWEEN ? AND ?"
+                params.extend(position_range)
+
+            query += " ORDER BY k.keyword, r.check_date, r.position"
             
             df = pd.read_sql_query(query, conn, params=params)
+            
+            # Convert check_date to datetime
+            if 'check_date' in df.columns:
+                df['check_date'] = pd.to_datetime(df['check_date'])
+                
             conn.close()
             return df
-            
+                
         except Exception as e:
             st.error(f"Error fetching ranking data: {str(e)}")
             return pd.DataFrame()
@@ -275,7 +445,6 @@ class DatabaseOperations:
         except Exception as e:
             st.error(f"Error fetching keywords: {str(e)}")
             return []
-    
     
     def get_llm_mention_data(self, model_name: str) -> pd.DataFrame:
         """Get mention data for a specific model."""
@@ -431,7 +600,7 @@ class DatabaseOperations:
         """
         conn = self.get_connection(config.URLS_DB_PATH)
         cursor = conn.cursor()
-        
+        print("fetching new pages")
         cursor.execute("""
             SELECT 
                 domain_name, 
@@ -442,15 +611,18 @@ class DatabaseOperations:
                 primary_keyword,
                 estimated_word_count
             FROM urls
-            WHERE datePublished >= date('now', '-' || ? || ' days')
-        """, (days,))
+            WHERE dateModified >= date('now', '-' || ? || ' days')
+            OR datePublished >= date('now', '-' || ? || ' days')
+        """, (days,days))
         
         data = cursor.fetchall()
         columns = [description[0] for description in cursor.description]
         df = pd.DataFrame(data, columns=columns)
-    
+        print(df)
+        print("fetched pages")
         conn.close()
         return df
+    
     # ====================== Get Ranking Changes for Analysis ===================== #
 
     def get_ranking_changes(self, days: int) -> pd.DataFrame:
@@ -623,35 +795,195 @@ class DatabaseOperations:
         conn.close()
         return data
     
-    def fetch_all_urls(self) -> pd.DataFrame:
-        """Fetch all URLs from the database."""
-        conn = self.get_connection(config.URLS_DB_PATH)
+    # def fetch_all_urls(self) -> pd.DataFrame:
+    #     """Fetch all URLs from the database."""
+    #     conn = self.get_connection(config.URLS_DB_PATH)
         
-        # Get all column names
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM urls LIMIT 1')
-        columns = [description[0] for description in cursor.description]
+    #     # Get all column names
+    #     cursor = conn.cursor()
+    #     cursor.execute('SELECT * FROM urls LIMIT 1')
+    #     columns = [description[0] for description in cursor.description]
         
-        # Fetch all records
-        query = f'SELECT {", ".join(columns)} FROM urls'
-        df = pd.read_sql_query(query, conn)
+    #     # Fetch all records
+    #     query = f'SELECT {", ".join(columns)} FROM urls'
+    #     df = pd.read_sql_query(query, conn)
         
-        conn.close()
-        return df
+    #     conn.close()
+    #     return df
 
-    def fetch_filtered_urls(self, start_idx: int, end_idx: int) -> pd.DataFrame:
-        """Fetch a subset of URLs with pagination."""
-        conn = self.get_connection(config.URLS_DB_PATH)
+    def fetch_all_urls(
+        self, 
+        domains: Optional[List[str]] = None,
+        statuses: Optional[List[str]] = None,
+        date_range: Optional[Tuple[datetime, datetime]] = None,
+        search: Optional[str] = None,
+        min_words: int = 0,
+        columns: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        """Fetch URLs with filtering options."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            
+            # Build the SELECT clause
+            select_columns = ", ".join(columns) if columns else "*"
+            query = f"SELECT {select_columns} FROM urls WHERE 1=1"
+            params = []
+
+            # Add filters
+            if domains:
+                query += " AND domain_name IN ({})".format(",".join("?" * len(domains)))
+                params.extend(domains)
+                
+            if statuses:
+                query += " AND status IN ({})".format(",".join("?" * len(statuses)))
+                params.extend(statuses)
+                
+            if date_range and date_range[0] and date_range[1]:
+                query += " AND datePublished BETWEEN ? AND ?"
+                params.extend([date_range[0].isoformat(), date_range[1].isoformat()])
+                
+            if search:
+                query += " AND (url LIKE ? OR domain_name LIKE ?)"
+                search_param = f"%{search}%"
+                params.extend([search_param, search_param])
+                
+            if min_words > 0:
+                query += " AND estimated_word_count >= ?"
+                params.append(min_words)
+
+            # Execute query
+            df = pd.read_sql_query(query, conn, params=params)
+            conn.close()
+            return df
+
+        except Exception as e:
+            st.error(f"Error fetching URLs: {str(e)}")
+            return pd.DataFrame()
+
+    # def fetch_filtered_urls(self, start_idx: int, end_idx: int) -> pd.DataFrame:
+    #     """Fetch a subset of URLs with pagination."""
+    #     conn = self.get_connection(config.URLS_DB_PATH)
         
-        query = '''
-            SELECT *
-            FROM urls
-            LIMIT ? OFFSET ?
-        '''
+    #     query = '''
+    #         SELECT *
+    #         FROM urls
+    #         LIMIT ? OFFSET ?
+    #     '''
         
-        df = pd.read_sql_query(query, conn, params=[end_idx - start_idx, start_idx])
-        conn.close()
-        return df
+    #     df = pd.read_sql_query(query, conn, params=[end_idx - start_idx, start_idx])
+    #     conn.close()
+    #     return df
+
+    # def fetch_filtered_urls(
+    #     self,
+    #     domains: Optional[List[str]] = None,
+    #     statuses: Optional[List[str]] = None,
+    #     date_range: Optional[Tuple[datetime, datetime]] = None,
+    #     search: Optional[str] = None,
+    #     min_words: Optional[int] = None,
+    #     columns: Optional[List[str]] = None
+    # ) -> pd.DataFrame:
+    #     """Fetch URLs with filtering options and proper NULL handling."""
+    #     try:
+    #         conn = self.get_connection(config.URLS_DB_PATH)
+            
+    #         # Build the SELECT clause
+    #         select_columns = ", ".join(columns) if columns else "*"
+    #         query = f"SELECT {select_columns} FROM urls WHERE 1=1"
+    #         params = []
+
+    #         # Add filters
+    #         if domains:
+    #             query += f" AND domain_name IN ({','.join(['?'] * len(domains))})"
+    #             params.extend(domains)
+                
+    #         if statuses:
+    #             query += f" AND status IN ({','.join(['?'] * len(statuses))})"
+    #             params.extend(statuses)
+                
+    #         if date_range and isinstance(date_range, tuple) and len(date_range) == 2 and date_range[0]:
+    #             query += " AND (datePublished BETWEEN ? AND ? OR datePublished IS NULL)"
+    #             params.extend([date_range[0].strftime('%Y-%m-%d'), date_range[1].strftime('%Y-%m-%d')])
+                
+    #         if search:
+    #             query += " AND (url LIKE ? OR domain_name LIKE ?)"
+    #             search_param = f"%{search}%"
+    #             params.extend([search_param, search_param])
+                
+    #         if min_words:
+    #             query += " AND (estimated_word_count >= ? OR estimated_word_count IS NULL)"
+    #             params.append(min_words)
+
+    #         # Execute query
+    #         df = pd.read_sql_query(query, conn, params=params)
+            
+    #         # Convert date columns to datetime, handling NULL values
+    #         date_columns = ['datePublished', 'dateModified', 'last_analyzed']
+    #         for col in date_columns:
+    #             if col in df.columns:
+    #                 df[col] = pd.to_datetime(df[col], errors='coerce')
+            
+    #         conn.close()
+    #         return df
+
+    #     except Exception as e:
+    #         st.error(f"Error fetching URLs: {str(e)}")
+    #         return pd.DataFrame()
+
+    def fetch_filtered_urls(
+        self,
+        domains: Optional[List[str]] = None,
+        statuses: Optional[List[str]] = None,
+        date_range: Optional[Tuple[date, date]] = None,
+        search: Optional[str] = None,
+        min_words: Optional[int] = None,
+        columns: Optional[List[str]] = None
+    ) -> pd.DataFrame:
+        """Fetch URLs with proper date handling."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            
+            # Build the SELECT clause
+            select_columns = ", ".join(columns) if columns else "*"
+            query = f"SELECT {select_columns} FROM urls WHERE 1=1"
+            params = []
+
+            # Add filters
+            if domains:
+                query += f" AND domain_name IN ({','.join(['?'] * len(domains))})"
+                params.extend(domains)
+                
+            if statuses:
+                query += f" AND status IN ({','.join(['?'] * len(statuses))})"
+                params.extend(statuses)
+                
+            # Date range filtering
+            if date_range and len(date_range) == 2:
+                start_date = date_range[0].strftime('%Y-%m-%d')
+                end_date = date_range[1].strftime('%Y-%m-%d')
+                query += " AND datePublished BETWEEN ? AND ?"
+                params.extend([start_date, end_date])
+
+            if search:
+                query += " AND (url LIKE ? OR domain_name LIKE ?)"
+                search_param = f"%{search}%"
+                params.extend([search_param, search_param])
+                
+            if min_words:
+                query += " AND (estimated_word_count >= ? OR estimated_word_count IS NULL)"
+                params.append(min_words)
+
+            query += " ORDER BY datePublished DESC"
+            
+            # Read data
+            df = pd.read_sql_query(query, conn, params=params)
+            
+            conn.close()
+            return df
+
+        except Exception as e:
+            st.error(f"Error fetching URLs: {str(e)}")
+            return pd.DataFrame()
 
     def fetch_urls_modified_last_7_days(self) -> List[Tuple]:
         """Fetch URLs modified in the last 7 days."""
@@ -670,6 +1002,7 @@ class DatabaseOperations:
         data = cursor.fetchall()
         conn.close()
         return data
+    
     def get_category_distribution(self) -> pd.DataFrame:
         """Get the distribution of content categories."""
         conn = self.get_connection(config.URLS_DB_PATH)
@@ -696,26 +1029,37 @@ class DatabaseOperations:
         
         return df
 
-    def get_word_count_data(self) -> pd.DataFrame:
+    def get_word_count_data(self, start_date=None, end_date=None) -> pd.DataFrame:
         """Get word count distribution over time."""
-        conn = self.get_connection(config.URLS_DB_PATH)
-        
-        query = '''
-        SELECT 
-            domain_name,
-            datePublished as Date,
-            estimated_word_count as 'Word Count'
-        FROM urls 
-        WHERE datePublished IS NOT NULL 
-            AND estimated_word_count IS NOT NULL
-        ORDER BY datePublished
-        '''
-        
-        df = pd.read_sql_query(query, conn)
-        df['Date'] = pd.to_datetime(df['Date'])
-        conn.close()
-        return df
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            
+            query = """
+            SELECT 
+                domain_name,
+                datePublished as Date,
+                estimated_word_count as 'Word Count',
+                url
+            FROM urls 
+            WHERE datePublished IS NOT NULL 
+                AND estimated_word_count IS NOT NULL
+            """
+            
+            params = []
+            if start_date and end_date:
+                query += " AND datePublished BETWEEN ? AND ?"
+                params.extend([start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')])
+                
+            query += " ORDER BY datePublished"
+            
+            df = pd.read_sql_query(query, conn, params=params)
+            df['Date'] = pd.to_datetime(df['Date'])
+            conn.close()
+            return df
 
+        except Exception as e:
+            st.error(f"Error fetching word count data: {str(e)}")
+            return pd.DataFrame()
     def get_keywords(self) -> List[str]:
         """Fetch all keywords from the rankings database."""
         try:
@@ -822,6 +1166,457 @@ class DatabaseOperations:
         """Check if a column is critical for application functionality."""
         critical_columns = ["status", "url", "domain_name"]
         return column_name in critical_columns
+    
+    def _track_content_change(self, cursor: sqlite3.Cursor, url_id: int, 
+                            field: str, old_value: str, new_value: str) -> None:
+        """Track content changes in history table."""
+        cursor.execute("""
+            INSERT INTO url_content_changes (
+                url_id, change_date, field_changed, 
+                old_value, new_value
+            ) VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?)
+        """, (url_id, field, old_value, new_value))
+
+    def get_content_changes(self, url_id: int) -> List[Dict]:
+        """Get history of content changes for a URL."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT change_date, field_changed, old_value, new_value
+                FROM url_content_changes
+                WHERE url_id = ?
+                ORDER BY change_date DESC
+            """, (url_id,))
+            
+            changes = []
+            for row in cursor.fetchall():
+                changes.append({
+                    'date': row[0],
+                    'field': row[1],
+                    'old_value': row[2],
+                    'new_value': row[3]
+                })
+            
+            return changes
+            
+        except Exception as e:
+            st.error(f"Error fetching content changes: {str(e)}")
+            return []
+        finally:
+            conn.close()
+
+    def get_url_info(self, url: str) -> Optional[Dict]:
+        """Get URL information from database."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM urls WHERE url = ?
+            """, (url,))
+            
+            row = cursor.fetchone()
+            if row:
+                columns = [description[0] for description in cursor.description]
+                return dict(zip(columns, row))
+            return None
+            
+        finally:
+            conn.close()
+
+    # def update_url(self, url: str, sitemap_url: str, status: str, **kwargs) -> bool:
+    #     """Update or insert URL information."""
+    #     try:
+    #         conn = self.get_connection(config.URLS_DB_PATH)
+    #         cursor = conn.cursor()
+            
+    #         # Prepare fields and values
+    #         fields = ['url', 'sitemap_url', 'status', 'last_processed']  # Changed from last_updated
+    #         values = [url, sitemap_url, status, datetime.now().isoformat()]
+            
+    #         # Add additional fields from kwargs
+    #         for key, value in kwargs.items():
+    #             if value is not None:
+    #                 fields.append(key)
+    #                 values.append(value)
+            
+    #         # Create SQL query
+    #         field_names = ', '.join(fields)
+    #         placeholders = ', '.join(['?' for _ in fields])
+    #         update_stmt = ', '.join(f'{f}=excluded.{f}' for f in fields if f != 'url')
+            
+    #         # Use upsert
+    #         cursor.execute(f"""
+    #             INSERT INTO urls ({field_names})
+    #             VALUES ({placeholders})
+    #             ON CONFLICT(url) DO UPDATE SET
+    #             {update_stmt}
+    #         """, values)
+            
+    #         conn.commit()
+    #         return True
+            
+    #     except Exception as e:
+    #         print(f"Error updating URL {url}: {str(e)}")
+    #         return False
+    #     finally:
+    #         conn.close()
+
+    def update_url(self, url: str, status: str, **kwargs) -> bool:
+        """Update or insert URL information."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            # Only use columns that exist in the schema
+            valid_columns = {
+                'url', 'domain_name', 'status', 'summary', 
+                'category', 'primary_keyword', 'estimated_word_count',
+                'datePublished', 'dateModified', 'last_analyzed',
+                'analysis_version'
+            }
+            
+            # Prepare fields and values
+            fields = ['url', 'status']
+            values = [url, status]
+            
+            # Add additional fields from kwargs if they exist in schema
+            for key, value in kwargs.items():
+                if key in valid_columns and value is not None:
+                    fields.append(key)
+                    values.append(value)
+            
+            # Create SQL query
+            field_names = ', '.join(fields)
+            placeholders = ', '.join(['?' for _ in fields])
+            update_stmt = ', '.join(f'{f}=excluded.{f}' for f in fields if f != 'url')
+            
+            # Use upsert
+            cursor.execute(f"""
+                INSERT INTO urls ({field_names})
+                VALUES ({placeholders})
+                ON CONFLICT(url) DO UPDATE SET
+                {update_stmt}
+            """, values)
+            
+            conn.commit()
+            return True
+            
+        except Exception as e:
+            print(f"Error updating URL {url}: {str(e)}")
+            return False
+        finally:
+            conn.close()
+
+    def get_processing_stats(self) -> Dict:
+        """Get processing statistics."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT 
+                    status,
+                    COUNT(*) as count,
+                    MIN(last_processed) as oldest,  
+                    MAX(last_processed) as newest  
+                FROM urls
+                GROUP BY status
+            """)
+            
+            stats = {}
+            for row in cursor.fetchall():
+                stats[row[0]] = {
+                    'count': row[1],
+                    'oldest': row[2],
+                    'newest': row[3]
+                }
+            
+            return stats
+            
+        finally:
+            conn.close()
+
+    def update_url_analysis(self, url: str, summary: str = None, 
+                          category: str = None, primary_keyword: str = None,
+                          estimated_word_count: int = None) -> bool:
+        """Update URL analysis results."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            update_fields = []
+            update_values = []
+            
+            # Add non-None fields
+            if summary is not None:
+                update_fields.append('summary')
+                update_values.append(summary)
+            if category is not None:
+                update_fields.append('category')
+                update_values.append(category)
+            if primary_keyword is not None:
+                update_fields.append('primary_keyword')
+                update_values.append(primary_keyword)
+            if estimated_word_count is not None:
+                update_fields.append('estimated_word_count')
+                update_values.append(estimated_word_count)
+            
+            if update_fields:
+                # Add status and timestamp
+                update_fields.extend(['status', 'last_analyzed'])
+                update_values.extend(['processed', datetime.now().isoformat()])
+                
+                # Create update query
+                update_stmt = ', '.join(f'{f}=?' for f in update_fields)
+                cursor.execute(f"""
+                    UPDATE urls 
+                    SET {update_stmt}
+                    WHERE url = ?
+                """, [*update_values, url])
+                
+                conn.commit()
+                return True
+            
+            return False
+            
+        except Exception as e:
+            print(f"Error in update_url_analysis: {str(e)}")
+            return False
+        finally:
+            conn.close()
+
+    def get_urls_by_status(self, status: str = None, limit: int = 100) -> List[Dict]:
+        """Get URLs with specific status."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            if status:
+                cursor.execute("""
+                    SELECT * FROM urls 
+                    WHERE status = ?
+                    LIMIT ?
+                """, (status, limit))
+            else:
+                cursor.execute("""
+                    SELECT * FROM urls 
+                    LIMIT ?
+                """, (limit,))
+            
+            columns = [description[0] for description in cursor.description]
+            results = []
+            for row in cursor.fetchall():
+                results.append(dict(zip(columns, row)))
+            
+            return results
+            
+        finally:
+            conn.close()
+
+    def get_processing_stats(self) -> Dict:
+        """Get processing statistics."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT 
+                    status,
+                    COUNT(*) as count,
+                    MIN(last_analyzed) as oldest,
+                    MAX(last_analyzed) as newest
+                FROM urls
+                GROUP BY status
+            """)
+            
+            stats = {}
+            for row in cursor.fetchall():
+                stats[row[0]] = {
+                    'count': row[1],
+                    'oldest': row[2],
+                    'newest': row[3]
+                }
+            
+            return stats
+            
+        finally:
+            conn.close()
+
+    def get_unique_domains(self) -> List[str]:
+        """Get list of unique domains across all databases."""
+        try:
+            # Get domains from URLs database
+            conn_urls = self.get_connection(config.URLS_DB_PATH)
+            cursor_urls = conn_urls.cursor()
+            cursor_urls.execute("SELECT DISTINCT domain_name FROM urls WHERE domain_name IS NOT NULL")
+            url_domains = set(row[0] for row in cursor_urls.fetchall())
+            conn_urls.close()
+
+            # Get domains from Rankings database
+            conn_rankings = self.get_connection(config.RANKINGS_DB_PATH)
+            cursor_rankings = conn_rankings.cursor()
+            cursor_rankings.execute("SELECT DISTINCT domain FROM rankings WHERE domain IS NOT NULL")
+            ranking_domains = set(row[0] for row in cursor_rankings.fetchall())
+            conn_rankings.close()
+
+            # Combine and sort all domains
+            all_domains = sorted(url_domains.union(ranking_domains))
+            return all_domains
+
+        except Exception as e:
+            st.error(f"Error fetching domains: {str(e)}")
+            return []
+
+    def get_llm_data(
+        self,
+        keywords: Optional[List[str]] = None,
+        models: Optional[List[str]] = None,
+        date_range: Optional[Tuple[datetime, datetime]] = None,
+        mentions: str = "All"
+    ) -> pd.DataFrame:
+        """Fetch LLM analysis data with filtering."""
+        try:
+            conn = self.get_connection(config.AIMODELS_DB_PATH)
+            
+            # Start with base query
+            query = "SELECT * FROM keyword_rankings WHERE 1=1"
+            params = []
+
+            # Add filters
+            if keywords:
+                query += " AND keyword IN ({})".format(",".join("?" * len(keywords)))
+                params.extend(keywords)
+
+            if date_range and date_range[0] and date_range[1]:
+                query += " AND check_date BETWEEN ? AND ?"
+                params.extend([date_range[0].isoformat(), date_range[1].isoformat()])
+
+            # Handle mention filtering
+            if mentions == "With Mentions":
+                conditions = []
+                for model in models if models else self.get_model_list():
+                    conditions.append(f"{model}_atlan_mention = 1")
+                if conditions:
+                    query += " AND (" + " OR ".join(conditions) + ")"
+            elif mentions == "Without Mentions":
+                conditions = []
+                for model in models if models else self.get_model_list():
+                    conditions.append(f"{model}_atlan_mention = 0")
+                if conditions:
+                    query += " AND (" + " AND ".join(conditions) + ")"
+
+            # Execute query
+            df = pd.read_sql_query(query, conn, params=params)
+            
+            # Filter columns if models specified
+            if models:
+                base_cols = ['keyword', 'check_date']
+                model_cols = []
+                for model in models:
+                    model_cols.extend([f"{model}_answer", f"{model}_atlan_mention"])
+                df = df[base_cols + model_cols]
+                
+            conn.close()
+            return df
+
+        except Exception as e:
+            st.error(f"Error fetching LLM data: {str(e)}")
+            return pd.DataFrame()
+
+    def get_content_domains(self) -> List[str]:
+        """Get list of unique domains from the URLs database only."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT DISTINCT domain_name 
+                FROM urls 
+                WHERE domain_name IS NOT NULL 
+                ORDER BY domain_name
+            """)
+            
+            domains = [row[0] for row in cursor.fetchall()]
+            conn.close()
+            return domains
+
+        except Exception as e:
+            st.error(f"Error fetching domains: {str(e)}")
+            return []
+
+    def inspect_date_formats(self) -> Dict[str, List[str]]:
+        """Inspect actual date formats in the database."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT 
+                    datePublished,
+                    dateModified,
+                    last_analyzed
+                FROM urls 
+                WHERE datePublished IS NOT NULL 
+                OR dateModified IS NOT NULL 
+                OR last_analyzed IS NOT NULL 
+                LIMIT 5
+            """)
+            
+            results = cursor.fetchall()
+            sample_dates = {
+                'datePublished': [],
+                'dateModified': [],
+                'last_analyzed': []
+            }
+            
+            for row in results:
+                if row[0]: sample_dates['datePublished'].append(row[0])
+                if row[1]: sample_dates['dateModified'].append(row[1])
+                if row[2]: sample_dates['last_analyzed'].append(row[2])
+                
+            conn.close()
+            return sample_dates
+                
+        except Exception as e:
+            st.error(f"Error inspecting dates: {str(e)}")
+            return {}
+
+    def get_word_count_metrics(self, start_date, end_date):
+        """Get word count statistics by domain."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            query = """
+                SELECT 
+                    domain_name,
+                    AVG(estimated_word_count) as mean,
+                    AVG(estimated_word_count) as median  -- SQLite doesn't have median, using avg as placeholder
+                FROM urls
+                WHERE datePublished BETWEEN ? AND ?
+                GROUP BY domain_name
+            """
+            df = pd.read_sql_query(query, conn, params=[start_date, end_date])
+            conn.close()
+            return df
+            
+        except Exception as e:
+            st.error(f"Error getting word count metrics: {str(e)}")
+            return pd.DataFrame()
+
+    def get_unique_domains(self) -> List[str]:
+        """Get list of unique domains."""
+        try:
+            conn = self.get_connection(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT domain_name FROM urls ORDER BY domain_name")
+            domains = [row[0] for row in cursor.fetchall()]
+            conn.close()
+            return domains
+        except Exception as e:
+            st.error(f"Error getting domains: {str(e)}")
+            return []
 
 # Create a global instance of DatabaseOperations
 db_ops = DatabaseOperations()

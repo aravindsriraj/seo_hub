@@ -1,98 +1,137 @@
-from datetime import datetime,timedelta
+import sqlite3
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime,timedelta
 from typing import List, Dict, Any, Union
-from seo_hub.ui.components import metrics, charts, filters, progress, tables
-from seo_hub.core.config import config
-from seo_hub.core.services import url_service, content_processor, ranking_service, llm_analyzer
-from seo_hub.data.operations import db_ops
-from seo_hub.ui.qa_view import QAView
+from ui.components import metrics, charts, filters, progress, tables
+from core.config import config
+from core.services import url_service, content_processor, ranking_service, llm_analyzer
+from data.operations import db_ops
+from ui.qa_view import QAView
+
+# New Class Dashboard View Implementation
 
 class DashboardView:
-    """Implements the Key Statistics dashboard tab."""
+    """Implements the Key Statistics dashboard focused on database health and data quality."""
     
     @staticmethod
-    def calculate_content_stats() -> dict:
+    def calculate_content_stats() -> Dict[str, Union[int, Dict[str, int], str]]:
         """Calculate statistics for content database."""
-        import sqlite3
-        conn = sqlite3.connect(config.URLS_DB_PATH)
-        cursor = conn.cursor()
-        
-        stats = {}
-        
         try:
+            conn = sqlite3.connect(config.URLS_DB_PATH)
+            cursor = conn.cursor()
+            
+            stats = {}
+            
             # Total URLs
             cursor.execute("SELECT COUNT(*) FROM urls")
             stats['total_urls'] = cursor.fetchone()[0]
             
             # Status distribution
             cursor.execute("SELECT status, COUNT(*) FROM urls GROUP BY status")
-            stats['status_counts'] = dict(cursor.fetchall())
+            stats['status_counts'] = dict(cursor.fetchall() or {})
             
             # URLs with dates
-            cursor.execute("SELECT COUNT(*) FROM urls WHERE datePublished IS NOT NULL")
-            stats['urls_with_published_date'] = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM urls WHERE dateModified IS NOT NULL")
-            stats['urls_with_modified_date'] = cursor.fetchone()[0]
+            cursor.execute("""
+                SELECT 
+                    COUNT(CASE WHEN datePublished IS NOT NULL 
+                          AND datePublished != '' 
+                          AND datePublished != 'N/A' THEN 1 END) as with_published,
+                    COUNT(CASE WHEN dateModified IS NOT NULL 
+                          AND dateModified != '' 
+                          AND dateModified != 'N/A' THEN 1 END) as with_modified,
+                    COUNT(CASE WHEN summary IS NOT NULL 
+                          AND summary != '' 
+                          AND summary != 'N/A' THEN 1 END) as with_summary,
+                    COUNT(CASE WHEN category IS NOT NULL 
+                          AND category != '' 
+                          AND category != 'N/A' THEN 1 END) as with_category,
+                    MAX(last_analyzed) as latest_update
+                FROM urls
+            """)
             
-            # Content completeness
-            cursor.execute("SELECT COUNT(*) FROM urls WHERE summary IS NOT NULL AND summary != 'N/A'")
-            stats['urls_with_summary'] = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM urls WHERE category IS NOT NULL AND category != 'N/A'")
-            stats['urls_with_category'] = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            if result:
+                stats['urls_with_published_date'] = result[0]
+                stats['urls_with_modified_date'] = result[1]
+                stats['urls_with_summary'] = result[2]
+                stats['urls_with_category'] = result[3]
+                stats['latest_update'] = result[4] if result[4] else 'Never'
             
-        except Exception as e:
-            st.error(f"Error calculating content stats: {str(e)}")
-            stats = {}
+            conn.close()
+            return stats
             
-        conn.close()
-        return stats
+        except sqlite3.Error as e:
+            st.error(f"Database error in calculate_content_stats: {str(e)}")
+            return {
+                'total_urls': 0,
+                'status_counts': {},
+                'urls_with_published_date': 0,
+                'urls_with_modified_date': 0,
+                'urls_with_summary': 0,
+                'urls_with_category': 0,
+                'latest_update': 'Error'
+            }
 
     @staticmethod
-    def calculate_ranking_stats() -> dict:
+    def calculate_ranking_stats() -> Dict[str, Union[int, float, str]]:
         """Calculate statistics for rankings database."""
-        import sqlite3
         try:
             conn = sqlite3.connect(config.RANKINGS_DB_PATH)
             cursor = conn.cursor()
             
             stats = {}
             
-            # Total keywords tracked
-            cursor.execute("SELECT COUNT(DISTINCT keyword) FROM keywords")
-            stats['total_keywords'] = cursor.fetchone()[0]
+            # Total keywords and domains
+            cursor.execute("""
+                SELECT 
+                    (SELECT COUNT(DISTINCT keyword) FROM keywords) as total_keywords,
+                    (SELECT COUNT(*) FROM rankings) as total_rankings,
+                    (SELECT COUNT(DISTINCT domain) FROM rankings) as domains_tracked,
+                    (SELECT MAX(check_date) FROM rankings) as latest_check
+            """)
             
-            # Total ranking records
-            cursor.execute("SELECT COUNT(*) FROM rankings")
-            stats['total_rankings'] = cursor.fetchone()[0]
-            
-            # Latest check date
-            cursor.execute("SELECT MAX(check_date) FROM rankings")
-            stats['latest_check'] = cursor.fetchone()[0]
-            
-            # Domains tracked
-            cursor.execute("SELECT COUNT(DISTINCT domain) FROM rankings")
-            stats['domains_tracked'] = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            if result:
+                stats['total_keywords'] = result[0] or 0
+                stats['total_rankings'] = result[1] or 0
+                stats['domains_tracked'] = result[2] or 0
+                stats['latest_check'] = result[3] if result[3] else 'Never'
+                
+                # Calculate expected rankings and completeness
+                if stats['total_keywords'] > 0 and stats['domains_tracked'] > 0:
+                    stats['expected_rankings'] = stats['total_keywords'] * stats['domains_tracked']
+                    stats['completeness'] = (stats['total_rankings'] / stats['expected_rankings'] * 100) 
+                else:
+                    stats['expected_rankings'] = 0
+                    stats['completeness'] = 0.0
             
             conn.close()
             return stats
-        except Exception as e:
-            st.error(f"Error calculating ranking stats: {str(e)}")
-            return {}
+            
+        except sqlite3.Error as e:
+            st.error(f"Database error in calculate_ranking_stats: {str(e)}")
+            return {
+                'total_keywords': 0,
+                'total_rankings': 0,
+                'domains_tracked': 0,
+                'latest_check': 'Error',
+                'expected_rankings': 0,
+                'completeness': 0.0
+            }
 
     @staticmethod
-    def calculate_llm_stats() -> dict:
+    def calculate_llm_stats() -> Dict[str, Union[int, float, str]]:
         """Calculate statistics for LLM analysis database."""
-        import sqlite3
         try:
             conn = sqlite3.connect(config.AIMODELS_DB_PATH)
             cursor = conn.cursor()
             
             stats = {}
             
-            # Get column info to identify model columns
+            # Get table info to count model columns
             cursor.execute("PRAGMA table_info(keyword_rankings)")
             columns = cursor.fetchall()
             
@@ -100,338 +139,752 @@ class DashboardView:
             model_columns = [col[1] for col in columns if col[1].endswith('_answer')]
             stats['models_tracked'] = len(model_columns)
             
-            # Latest check date
-            cursor.execute("SELECT MAX(check_date) FROM keyword_rankings")
-            stats['latest_check'] = cursor.fetchone()[0]
+            # Get response counts and latest check
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_responses,
+                    COUNT(DISTINCT keyword) as keywords_covered,
+                    MAX(check_date) as latest_check
+                FROM keyword_rankings
+            """)
             
-            # Total responses
-            cursor.execute("SELECT COUNT(*) FROM keyword_rankings")
-            stats['total_responses'] = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            if result:
+                stats['total_responses'] = result[0] or 0
+                keywords_covered = result[1] or 0
+                stats['latest_check'] = result[2] if result[2] else 'Never'
+                
+                # Calculate averages and coverage
+                if stats['models_tracked'] > 0:
+                    stats['avg_responses_per_model'] = stats['total_responses'] / stats['models_tracked']
+                else:
+                    stats['avg_responses_per_model'] = 0.0
+                
+                # Get total keywords for coverage calculation
+                cursor.execute("ATTACH DATABASE ? AS rankings", (config.RANKINGS_DB_PATH,))
+                cursor.execute("SELECT COUNT(DISTINCT keyword) FROM rankings.keywords")
+                total_keywords = cursor.fetchone()[0] or 1  # Avoid division by zero
+                
+                stats['response_coverage'] = (keywords_covered / total_keywords * 100)
             
             conn.close()
             return stats
-        except Exception as e:
-            st.error(f"Error calculating LLM stats: {str(e)}")
-            return {}
-        
+            
+        except sqlite3.Error as e:
+            st.error(f"Database error in calculate_llm_stats: {str(e)}")
+            return {
+                'models_tracked': 0,
+                'total_responses': 0,
+                'latest_check': 'Error',
+                'avg_responses_per_model': 0.0,
+                'response_coverage': 0.0
+            }
+
     @staticmethod
     def render():
-        st.header("Database Dashboard")
+        """Render the dashboard view with balanced layout."""
+        st.header("Database Health Dashboard")
         
-        # Database Statistics Section
-        st.subheader("Database Statistics")
+        # Fetch all stats first
+        content_stats = DashboardView.calculate_content_stats()
+        ranking_stats = DashboardView.calculate_ranking_stats()
+        llm_stats = DashboardView.calculate_llm_stats()
         
-        # Content Stats
-        with st.expander("Content Database Metrics", expanded=True):
-            content_stats = DashboardView.calculate_content_stats()
-            if content_stats:
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    total = content_stats.get('total_urls', 0)
-                    if total > 0:
-                        st.metric("Total URLs", total)
-                        st.metric("URLs with Published Date", 
-                                f"{content_stats.get('urls_with_published_date', 0)} "
-                                f"({content_stats.get('urls_with_published_date', 0)/total*100:.1f}%)")
-                        st.metric("URLs with Modified Date",
-                                f"{content_stats.get('urls_with_modified_date', 0)} "
-                                f"({content_stats.get('urls_with_modified_date', 0)/total*100:.1f}%)")
-                
-                with col2:
-                    st.metric("URLs with Summary",
-                            f"{content_stats.get('urls_with_summary', 0)} "
-                            f"({content_stats.get('urls_with_summary', 0)/total*100:.1f}%)")
-                    st.metric("URLs with Category",
-                            f"{content_stats.get('urls_with_category', 0)} "
-                            f"({content_stats.get('urls_with_category', 0)/total*100:.1f}%)")
-
-        # Rankings Stats
-        with st.expander("Rankings Database Metrics", expanded=True):
-            ranking_stats = DashboardView.calculate_ranking_stats()
-            if ranking_stats:
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Total Keywords", ranking_stats.get('total_keywords', 0))
-                    st.metric("Total Rankings", ranking_stats.get('total_rankings', 0))
-                
-                with col2:
-                    st.metric("Domains Tracked", ranking_stats.get('domains_tracked', 0))
-                    st.metric("Latest Check", ranking_stats.get('latest_check', 'N/A'))
-
-        # LLM Stats
-        with st.expander("LLM Analysis Metrics", expanded=True):
-            llm_stats = DashboardView.calculate_llm_stats()
-            if llm_stats:
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Models Tracked", llm_stats.get('models_tracked', 0))
-                    st.metric("Total Responses", llm_stats.get('total_responses', 0))
-                
-                with col2:
-                    st.metric("Latest Check", llm_stats.get('latest_check', 'N/A'))
-                    avg_responses = (llm_stats.get('total_responses', 0) / 
-                                  llm_stats.get('models_tracked', 1) if llm_stats.get('models_tracked', 0) > 0 else 0)
-                    st.metric("Avg Responses per Model", f"{avg_responses:.1f}")
-
-        st.markdown("---")
+        # Top-level metrics in a clean row
+        st.markdown("### Overview")
+        metrics_col1, metrics_col2, metrics_col3 = st.columns(3)
         
-        # Original Dashboard Content
-        total_rows, status_counts, domain_counts = db_ops.get_database_status()
+        with metrics_col1:
+            st.metric(
+                "Content Database",
+                f"{content_stats.get('total_urls', 0):,} URLs",
+                f"{len(content_stats.get('status_counts', {}))} States"
+            )
         
+        with metrics_col2:
+            st.metric(
+                "Rankings Database",
+                f"{ranking_stats.get('total_keywords', 0):,} Keywords",
+                f"{ranking_stats.get('domains_tracked', 0)} Domains"
+            )
+        
+        with metrics_col3:
+            st.metric(
+                "LLM Analysis",
+                f"{llm_stats.get('models_tracked', 0)} Models",
+                f"{llm_stats.get('total_responses', 0):,} Responses"
+            )
+            
+        # Data Quality Section - Equal sized columns
+        st.markdown("### Data Quality")
         col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total URLs", total_rows)
-            status_df = pd.DataFrame(status_counts, columns=["Status", "Count"])
-            st.dataframe(status_df)
-
-        with col2:
-            st.subheader("URLs by Status")
-            for status, count in status_counts:
-                st.metric(label=status, value=count)
-
-        with col3:
-            st.subheader("URLs by Domain Name")
-            domain_df = pd.DataFrame(domain_counts, columns=["Domain", "Count"])
-            st.dataframe(domain_df)
-
-        # Display time period analysis
-        st.subheader("Content Activity Analysis")
-        counts = db_ops.fetch_counts_by_time_period()
-        DashboardView._display_time_period_analysis(counts)
-
-        # Display recent activity
-        st.subheader("Recent Activity")
-        DashboardView._display_recent_activity()
-
-    @staticmethod
-    def _display_time_period_analysis(counts):
-        """Display analysis by time period."""
-        data = []
-        for domain, count_data in counts.items():
-            data.append([domain, "Published"] + count_data["Count of datePublished"])
-            data.append([domain, "Modified"] + count_data["Count of dateModified"])
-
-        df = pd.DataFrame(
-            data,
-            columns=["Domain Name", "Activity", "Last 7 days", "Last 14 days", 
-                    "Last 30 days", "Last 90 days", "Last 180 days"]
-        )
-        st.dataframe(df)
-
-    @staticmethod
-    def _display_recent_activity():
-        """Display recent content updates."""
-        published = db_ops.fetch_urls_published_last_7_days()
-        modified = db_ops.fetch_urls_modified_last_7_days()
         
-        if published:
-            st.subheader("Recently Published Pages")
-            published_df = pd.DataFrame(
-                published,
-                columns=["Domain Name", "URL", "Date Published"]
-            )
-            metrics.create_status_table(published_df, {
-                "Domain Name": "Domain",
-                "URL": st.column_config.LinkColumn("URL"),
-                "Date Published": st.column_config.DateColumn(
-                    "Published Date",
-                    format="MMM DD, YYYY"
-                )
-            })
+        # Content Quality
+        with col1:
+            with st.container(border=True):
+                st.subheader("Content Quality", divider="gray")
+                total_urls = content_stats.get('total_urls', 0)
+                if total_urls > 0:
+                    quality_metrics = {
+                        "Published Date": content_stats.get('urls_with_published_date', 0) / total_urls * 100,
+                        "Modified Date": content_stats.get('urls_with_modified_date', 0) / total_urls * 100,
+                        "Content Summary": content_stats.get('urls_with_summary', 0) / total_urls * 100,
+                        "Categorization": content_stats.get('urls_with_category', 0) / total_urls * 100
+                    }
+                    
+                    for metric, value in quality_metrics.items():
+                        indicator = "🟢" if value > 90 else "🟡" if value > 70 else "🔴"
+                        st.metric(
+                            metric,
+                            f"{value:.1f}%",
+                            indicator,
+                            delta_color="normal" if value > 70 else "inverse"
+                        )
 
-        if modified:
-            st.subheader("Recently Modified Pages")
-            modified_df = pd.DataFrame(
-                modified,
-                columns=["Domain Name", "URL", "Date Modified", "Date Published"]
-            )
-            metrics.create_status_table(modified_df, {
-                "Domain Name": "Domain",
-                "URL": st.column_config.LinkColumn("URL"),
-                "Date Modified": st.column_config.DateColumn(
-                    "Modified Date",
-                    format="MMM DD, YYYY"
+        # Rankings Quality
+        with col2:
+            with st.container(border=True):
+                st.subheader("Rankings Quality", divider="gray")
+                completeness = ranking_stats.get('completeness', 0)
+                st.metric(
+                    "Data Completeness",
+                    f"{completeness:.1f}%",
+                    "🟢" if completeness > 90 else "🟡" if completeness > 70 else "🔴"
                 )
-            })
+                
+                total_rankings = ranking_stats.get('total_rankings', 0)
+                st.metric("Total Records", f"{total_rankings:,}")
+                st.metric(
+                    "Coverage",
+                    f"{ranking_stats.get('domains_tracked', 0)} domains",
+                    f"{ranking_stats.get('total_keywords', 0)} keywords"
+                )
+
+        # LLM Quality
+        with col3:
+            with st.container(border=True):
+                st.subheader("LLM Quality", divider="gray")
+                coverage = llm_stats.get('response_coverage', 0)
+                st.metric(
+                    "Response Coverage",
+                    f"{coverage:.1f}%",
+                    "🟢" if coverage > 90 else "🟡" if coverage > 70 else "🔴"
+                )
+                
+                avg_responses = llm_stats.get('avg_responses_per_model', 0)
+                st.metric("Avg Responses/Model", f"{avg_responses:,.1f}")
+                st.metric(
+                    "Model Coverage",
+                    f"{llm_stats.get('models_tracked', 0)} models",
+                    f"{llm_stats.get('total_responses', 0):,} responses"
+                )
+
+        # Database Update Status
+        st.markdown("### Database Updates")
+        updates_col1, updates_col2, updates_col3 = st.columns(3)
+        
+        with updates_col1:
+            last_content = content_stats.get('latest_update', 'Never')
+            is_current = last_content == datetime.now().strftime('%Y-%m-%d')
+            st.metric(
+                "Content Database",
+                "Up to date" if is_current else "Needs update",
+                f"Last Updated: {last_content}",
+                delta_color="normal" if is_current else "inverse"
+            )
+            
+        with updates_col2:
+            last_rankings = ranking_stats.get('latest_check', 'Never')
+            is_current = last_rankings == datetime.now().strftime('%Y-%m-%d')
+            st.metric(
+                "Rankings Database",
+                "Up to date" if is_current else "Needs update",
+                f"Last Updated: {last_rankings}",
+                delta_color="normal" if is_current else "inverse"
+            )
+            
+        with updates_col3:
+            last_llm = llm_stats.get('latest_check', 'Never')
+            is_current = last_llm == datetime.now().strftime('%Y-%m-%d')
+            st.metric(
+                "LLM Database",
+                "Up to date" if is_current else "Needs update",
+                f"Last Updated: {last_llm}",
+                delta_color="normal" if is_current else "inverse"
+            )
+            
+        # Processing Status Section
+        st.markdown("### Processing Status")
+        if content_stats.get('status_counts'):
+            status_cols = st.columns(len(content_stats['status_counts']))
+            for idx, (status, count) in enumerate(content_stats['status_counts'].items()):
+                with status_cols[idx]:
+                    st.metric(
+                        status,
+                        count,
+                        f"{(count/content_stats['total_urls']*100):.1f}%" if content_stats['total_urls'] > 0 else "0%"
+                    )
 
 class DataView:
-    """Implements the Raw Data view tab."""
+    """Enhanced data view with comprehensive database exploration capabilities."""
     
     @staticmethod
     def render():
-        st.header("Raw Data View")
+        """Render the data view."""
+        st.header("Raw Data Explorer")
         
-        column_names = db_ops.get_column_names("urls", config.URLS_DB_PATH)
-        df = db_ops.fetch_all_urls()
+        # Database selector
+        db_tabs = st.tabs(["Content URLs", "Rankings", "LLM Analysis"])
         
+        # Content URLs Tab
+        with db_tabs[0]:
+            DataView._render_urls_view()
+            
+        # Rankings Tab
+        with db_tabs[1]:
+            DataView._render_rankings_view()
+            
+        # LLM Analysis Tab
+        with db_tabs[2]:
+            DataView._render_llm_view()
+    
+    @staticmethod
+    def _render_urls_view():
+        """Render Content URLs data view."""
+        st.subheader("Content Database")
+        
+        # Filters
+        with st.expander("Filters", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                domain_filter = st.multiselect(
+                    "Domain",
+                    options=db_ops.get_content_domains(),
+                    placeholder="All Domains",
+                    key="urls_domain_filter"
+                )
+                status_filter = st.multiselect(
+                    "Status",
+                    options=["Pending", "Processed", "Failed", "Updated"],
+                    placeholder="All Statuses",
+                    key="urls_status_filter"
+                )
+            
+            with col2:
+                start_date = st.date_input(
+                    "Start Date",
+                    value=datetime.now().date() - timedelta(days=30),
+                    key="urls_start_date"
+                )
+                end_date = st.date_input(
+                    "End Date",
+                    value=datetime.now().date(),
+                    key="urls_end_date"
+                )
+                
+                date_range = (start_date, end_date) if start_date and end_date else None
+            
+            with col3:
+                search_query = st.text_input(
+                    "Search URLs", 
+                    placeholder="Enter keywords...",
+                    key="urls_search"
+                )
+                min_words = st.number_input(
+                    "Min Word Count", 
+                    min_value=0,
+                    key="urls_min_words"
+                )
+        
+        # Get filtered data
+        df = db_ops.fetch_filtered_urls(
+            domains=domain_filter if domain_filter else None,
+            statuses=status_filter if status_filter else None,
+            date_range=date_range,
+            search=search_query if search_query else None,
+            min_words=min_words if min_words > 0 else None
+        )
+        
+        # Display data
+        if not df.empty:
+            # Create column config with proper date handling
+            column_config = {
+                "url": st.column_config.LinkColumn("URL"),
+                "domain_name": st.column_config.TextColumn("Domain"),
+                "status": st.column_config.TextColumn("Status"),
+                "datePublished": st.column_config.DateColumn(
+                    "Published Date",
+                    format="YYYY-MM-DD"
+                ),
+                "dateModified": st.column_config.DateColumn(
+                    "Modified Date",
+                    format="YYYY-MM-DD"
+                ),
+                "last_analyzed": st.column_config.DateColumn(
+                    "Last Analyzed",
+                    format="YYYY-MM-DD"
+                )
+            }
+            
+            st.dataframe(
+                df,
+                column_config=column_config,
+                hide_index=True,
+                use_container_width=True
+            )
+            
+            st.markdown(f"**Showing {len(df):,} records**")
+        else:
+            st.info("No records found matching the selected filters")
+    
+    @staticmethod
+    def _render_rankings_view():
+        """Render Rankings data view."""
+        st.subheader("Rankings Database")
+        
+        # Filters
+        with st.expander("Filters", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                keyword_filter = st.multiselect(
+                    "Keywords",
+                    options=db_ops.get_keywords(),
+                    placeholder="All Keywords",
+                    key="rankings_keyword_filter"
+                )
+                domain_filter = st.multiselect(
+                    "Domain",
+                    options=db_ops.get_unique_domains(),
+                    placeholder="All Domains",
+                    key="rankings_domain_filter"
+                )
+            
+            with col2:
+                try:
+                    date_range = st.date_input(
+                        "Check Date Range",
+                        value=[
+                            (datetime.now() - timedelta(days=30)).date(),
+                            datetime.now().date()
+                        ],
+                        key="rankings_date_range"
+                    )
+                except:
+                    date_range = [
+                        (datetime.now() - timedelta(days=30)).date(),
+                        datetime.now().date()
+                    ]
+                
+            with col3:
+                position_range = st.slider(
+                    "Position Range",
+                    min_value=1,
+                    max_value=100,
+                    value=(1, 100),
+                    key="rankings_position_range"
+                )
+        
+        # Get filtered data
+        df = db_ops.get_ranking_data(
+            keywords=keyword_filter if keyword_filter else None,
+            domains=domain_filter if domain_filter else None,
+            position_range=position_range,
+            date_range=date_range if isinstance(date_range, (list, tuple)) and len(date_range) == 2 else None
+        )
+        
+        DataView._render_data_table(df, "rankings")
+
+    @staticmethod
+    def _render_llm_view():
+        """Render LLM Analysis data view."""
+        st.subheader("LLM Analysis Database")
+        
+        # Filters
+        with st.expander("Filters", expanded=True):
+            col1, col2 = st.columns(2)
+            with col1:
+                keyword_filter = st.multiselect(
+                    "Keywords",
+                    options=db_ops.get_keywords(),
+                    placeholder="All Keywords",
+                    key="llm_keyword_filter"
+                )
+                models = db_ops.get_model_list()
+                model_filter = st.multiselect(
+                    "Models",
+                    options=models,
+                    placeholder="All Models",
+                    key="llm_model_filter"
+                )
+            
+            with col2:
+                try:
+                    date_range = st.date_input(
+                        "Check Date Range",
+                        value=None,
+                        key="llm_date_range"
+                    )
+                except:
+                    date_range = (None, None)
+                
+                mention_filter = st.selectbox(
+                    "Mention Filter",
+                    options=["All", "With Mentions", "Without Mentions"],
+                    key="llm_mention_filter"
+                )
+        
+        # Get filtered data
+        df = db_ops.get_llm_data(
+            keywords=keyword_filter if keyword_filter else None,
+            models=model_filter if model_filter else None,
+            date_range=date_range if isinstance(date_range, tuple) and date_range[0] else None,
+            mentions=mention_filter
+        )
+        
+        DataView._render_data_table(df, "llm")
+    
+    @staticmethod
+    def _render_data_table(df: pd.DataFrame, table_type: str):
+        """Render an enhanced data table with actions."""
         if df.empty:
-            st.write("No data available in the database.")
+            st.warning("No data found matching the selected filters.")
             return
             
-        paginated_df = tables.create_paginated_table(df)
-        st.dataframe(paginated_df, use_container_width=True)
+        # Format dates based on table type
+        try:
+            if table_type == "urls":
+                date_columns = ['datePublished', 'dateModified', 'last_analyzed']
+            elif table_type == "rankings":
+                date_columns = ['created_at', 'check_date']
+            elif table_type == "llm":
+                date_columns = ['check_date']
+            
+            # Format only existing date columns
+            for col in date_columns:
+                if col in df.columns:
+                    df[col] = pd.to_datetime(df[col], errors='coerce').dt.strftime('%Y-%m-%d')
+        except Exception as e:
+            st.warning(f"Note: Some date formatting could not be applied: {str(e)}")
+        
+        # Table stats
+        st.markdown(f"**Showing {len(df):,} records**")
+        
+        # Export buttons
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            st.download_button(
+                label="Export CSV",
+                data=df.to_csv(index=False).encode('utf-8'),
+                file_name=f"{table_type}_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                key=f"{table_type}_export_button"
+            )
+        
+        # Enhanced table display with type-specific column configurations
+        column_config = {
+            # Common configurations
+            "url": st.column_config.LinkColumn("URL"),
+            "domain_name": st.column_config.TextColumn("Domain"),
+            "keyword": st.column_config.TextColumn("Keyword"),
+        }
+        
+        # Add table-specific configurations
+        if table_type == "urls":
+            column_config.update({
+                "status": st.column_config.TextColumn("Status", help="Processing status"),
+                "estimated_word_count": st.column_config.NumberColumn("Words", help="Estimated word count"),
+                "datePublished": st.column_config.DateColumn("Published Date"),
+                "dateModified": st.column_config.DateColumn("Modified Date"),
+                "last_analyzed": st.column_config.DateColumn("Last Analyzed")
+            })
+        elif table_type == "rankings":
+            column_config.update({
+                "position": st.column_config.NumberColumn("Position", help="Search position"),
+                "domain": st.column_config.TextColumn("Domain", help="Website domain"),
+                "check_date": st.column_config.DateColumn("Check Date")
+            })
+        elif table_type == "llm":
+            # Add any LLM-specific column configurations
+            column_config.update({
+                "check_date": st.column_config.DateColumn("Check Date")
+            })
+        
+        st.dataframe(
+            df,
+            column_config=column_config,
+            hide_index=True,
+            use_container_width=True
+        )
+        
+        # Show completeness metrics for URLs
+        if table_type == "urls" and not df.empty:
+            st.markdown("### Data Completeness")
+            metrics_cols = st.columns(4)
+            complete_records = df.notna().mean() * 100
+            for idx, (col, completeness) in enumerate(complete_records.items()):
+                with metrics_cols[idx % 4]:
+                    st.metric(
+                        f"{table_type}_completeness_{col}",
+                        f"{completeness:.1f}%",
+                        delta="Complete" if completeness > 90 else "Incomplete",
+                        delta_color="normal" if completeness > 90 else "inverse"
+                    )
 
 class InsightsView:
+    """Implements the Content Insights view."""
+    
     @staticmethod
     def render():
         """Main render method for the Insights tab."""
         st.header("Content Insights")
         
-        # Category Distribution Section
-        st.subheader("Category Distribution by Domain")
-        InsightsView._render_category_distribution()
-        
-        # Word Count Analysis Section
-        st.subheader("Content Length Analysis")
-        InsightsView._render_word_count_analysis()
-        
-        # Keyword Distribution Section
-        st.subheader("Keyword Distribution")
-        InsightsView._render_keyword_analysis()
+        # Date range selector for all sections
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            date_range = st.date_input(
+                "Select Date Range",
+                value=[datetime.now() - timedelta(days=30), datetime.now()],
+                key="content_insights_date_range"
+            )
+        with col2:
+            selected_domains = st.multiselect(
+                "Select Domains",
+                options=db_ops.get_unique_domains(),
+                default=None,
+                placeholder="All Domains"
+            )
+
+        # Create tabs for different analyses
+        tabs = st.tabs([
+            "Category Analysis", 
+            "Content Length", 
+            "Keyword Analysis",
+            "Recent Activity"
+        ])
+
+        # Category Analysis Tab
+        with tabs[0]:
+            InsightsView._render_category_distribution()
+
+        # Content Length Tab
+        with tabs[1]:
+            InsightsView._render_word_count_analysis(date_range)
+
+        # Keyword Analysis Tab
+        with tabs[2]:
+            InsightsView._render_keyword_analysis()
+
+        # Recent Activity Tab
+        with tabs[3]:
+            InsightsView._render_recent_activity()
 
     @staticmethod
     def _render_category_distribution():
-        """Render category distribution charts."""
-        df = db_ops.get_category_distribution()
+        """Render category distribution analysis with improved layout."""
+        st.subheader("Content Category Distribution")
         
-        try:
-            domains = df['domain_name'].unique()
+        # Get category data
+        df = db_ops.get_category_distribution()
+        if not df.empty:
+            # Create two columns
+            col1, col2 = st.columns(2)
             
-            if len(domains) > 0:
-                cols = st.columns(len(domains))
-                
-                for idx, domain in enumerate(domains):
-                    with cols[idx]:
-                        domain_df = df[df['domain_name'] == domain].copy()
-                        domain_df = domain_df.rename(columns={
-                            'domain_name': 'Domain',
-                            'category': 'Category',
-                            'count': 'Count'
-                        })
-                        
-                        if not domain_df.empty:
-                            fig = px.pie(
-                                domain_df,
-                                values='Count',
-                                names='Category',
-                                title=f"Categories in {domain}"
-                            )
-                            
-                            fig.update_traces(
-                                textposition='inside',
-                                textinfo='percent+label'
-                            )
-                            
-                            fig.update_layout(
-                                showlegend=False,
-                                height=400,
-                                title={'y':0.9, 'x':0.5, 'xanchor':'center', 'yanchor':'top'}
-                            )
-                            
-                            st.plotly_chart(fig, use_container_width=True)
-                        else:
-                            st.write(f"No data available for {domain}")
-            else:
-                st.write("No domains found in the data")
+            # Process each domain
+            domains = sorted(df['domain_name'].unique())
+            for idx, domain in enumerate(domains):
+                # Alternate between columns
+                with col1 if idx % 2 == 0 else col2:
+                    domain_data = df[df['domain_name'] == domain]
+                    total_articles = domain_data['count'].sum()
                     
-        except Exception as e:
-            st.error(f"Error creating charts: {str(e)}")
-
+                    # Create pie chart
+                    fig = px.pie(
+                        domain_data,
+                        values='count',
+                        names='category',
+                        title=f"{domain}<br><sup>Total: {total_articles:,} articles</sup>"
+                    )
+                    
+                    # Update layout and traces
+                    fig.update_layout(
+                        height=400,  # Taller chart
+                        title_x=0.5,  # Center title
+                        margin=dict(t=60, l=20, r=20, b=20),  # Adjust margins
+                        showlegend=False,
+                        legend=dict(
+                            yanchor="top",
+                            y=0.99,
+                            xanchor="left",
+                            x=0.01
+                        )
+                    )
+                    
+                    # Update pie chart appearance
+                    fig.update_traces(
+                        textposition='inside',
+                        textinfo='percent+label',
+                        insidetextorientation='radial',
+                        hovertemplate="<b>%{label}</b><br>" +
+                                    "Count: %{value}<br>" +
+                                    "Percentage: %{percent:.1%}<extra></extra>"
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Add metrics below chart
+                    top_categories = domain_data.nlargest(3, 'count')
+                    st.markdown("**Top Categories:**")
+                    for _, row in top_categories.iterrows():
+                        percentage = (row['count'] / total_articles) * 100
+                        st.markdown(f"- {row['category']}: {row['count']:,} ({percentage:.1f}%)")
     @staticmethod
-    def _render_word_count_analysis():
+    def _render_word_count_analysis(date_range):
         """Render word count analysis."""
-        try:
-            df = db_ops.get_word_count_data()
+        st.subheader("Content Length Analysis")
+        
+        # Get word count data
+        word_count_df = db_ops.get_word_count_data(
+            start_date=date_range[0] if isinstance(date_range, (list, tuple)) else None,
+            end_date=date_range[1] if isinstance(date_range, (list, tuple)) else None
+        )
+        
+        if not word_count_df.empty:
+            # Calculate metrics by domain
+            metrics = word_count_df.groupby('domain_name')['Word Count'].agg([
+                ('mean', 'mean'),
+                ('median', 'median')
+            ]).round(0)
             
-            df = df.rename(columns={
-                'domain_name': 'Domain',
-                'Date': 'Date',
-                'Word Count': 'Word Count'
-            })
-            
+            # Display metrics
+            cols = st.columns(4)
+            for idx, (domain, stats) in enumerate(metrics.iterrows()):
+                with cols[idx % 4]:
+                    st.metric(
+                        label=str(domain),
+                        value=f"Avg: {stats['mean']:.0f}",
+                        delta=f"Median: {stats['median']:.0f}"
+                    )
+
+            # Trend chart
             fig = px.scatter(
-                df,
+                word_count_df,
                 x='Date',
                 y='Word Count',
-                color='Domain',
-                title='Content Length Distribution'
+                color='domain_name',
+                opacity=0.6,
+                hover_data=['url']
             )
-            
             st.plotly_chart(fig, use_container_width=True)
-            
-        except Exception as e:
-            st.error(f"Error creating word count analysis: {str(e)}")
+        else:
+            st.info("No word count data available for the selected date range")
+
 
     @staticmethod
     def _render_keyword_analysis():
         """Render keyword distribution analysis."""
-        try:
-            df = db_ops.get_keyword_distribution()
-            
-            df = df.rename(columns={
-                'domain_name': 'Domain',
-                'primary_keyword': 'Keyword',
-                'count': 'Count'
-            })
-            
-            fig = px.scatter(
+        st.subheader("Primary Keywords Distribution")
+        
+        df = db_ops.get_keyword_distribution()
+        if not df.empty:
+            fig = px.bar(
                 df,
-                x='Domain',
-                y='Count',
+                x='Count',
+                y='Keyword',
                 color='Domain',
-                size='Count',
-                text='Keyword',
-                title='Keyword Distribution'
+                orientation='h',
+                height=600
             )
-            
             st.plotly_chart(fig, use_container_width=True)
-            
-        except Exception as e:
-            st.error(f"Error creating keyword analysis: {str(e)}")
 
     @staticmethod
-    def _render_content_age_analysis():
-        """Render content aging analysis."""
-        df = db_ops.get_content_age_data()
+    def _render_recent_activity():
+        """Render recent activity analysis."""
+        col1, col2 = st.columns(2)
         
-        fig1 = px.histogram(
-            df,
-            x='content_age_days',
-            color='domain_name',
-            title="Content Age Distribution",
-            labels={'content_age_days': 'Age (Days)', 'count': 'Number of Pages'},
-            marginal="box"
-        )
-        st.plotly_chart(fig1, use_container_width=True)
-        
-        fig2 = px.line(
-            df.groupby(['year_week', 'domain_name'])['url'].count().reset_index(),
-            x='year_week',
-            y='url',
-            color='domain_name',
-            title='Publishing Patterns Over Time',
-            labels={'url': 'Number of Pages Published', 'year_week': 'Week'}
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-        
-        fig3 = px.box(
-            df,
-            x='category',
-            y='estimated_word_count',
-            color='domain_name',
-            title='Word Count Distribution by Category',
-            points="all"
-        )
-        st.plotly_chart(fig3, use_container_width=True)
+        with col1:
+            st.subheader("Recently Published")
+            recent_published = db_ops.fetch_urls_published_last_7_days()
+            if recent_published:
+                st.dataframe(
+                    pd.DataFrame(recent_published, 
+                               columns=["Domain", "URL", "Published Date"]),
+                    column_config={
+                        "URL": st.column_config.LinkColumn("URL"),
+                        "Published Date": st.column_config.DateColumn(
+                            "Published",
+                            format="MMM DD, YYYY"
+                        )
+                    },
+                    hide_index=True
+                )
+
+        with col2:
+            st.subheader("Recently Modified")
+            recent_modified = db_ops.fetch_urls_modified_last_7_days()
+            if recent_modified:
+                st.dataframe(
+                    pd.DataFrame(recent_modified, 
+                               columns=["Domain", "URL", "Modified Date", "Published Date"]),
+                    column_config={
+                        "URL": st.column_config.LinkColumn("URL"),
+                        "Modified Date": st.column_config.DateColumn(
+                            "Modified",
+                            format="MMM DD, YYYY"
+                        ),
+                        "Published Date": st.column_config.DateColumn(
+                            "Published",
+                            format="MMM DD, YYYY"
+                        )
+                    },
+                    hide_index=True
+                )
+
 
 class PositionView:
-    """Implements the Position Tracking tab."""
-    
     @staticmethod
-    def _render_summary_dashboard(df):
+    def render():
+        """Render the position tracking view."""
+        st.header("Search Position Tracking")
+        
+        # Get all keywords
+        all_keywords = db_ops.get_keywords()
+        
+        # Get date range for initial data
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=90)
+        
+        # Get all ranking data for summary
+        rankings_df = db_ops.get_ranking_data(
+            keywords=all_keywords,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        if not rankings_df.empty:
+            # Render summary dashboard with all data
+            PositionView._render_summary_dashboard(rankings_df)
+            PositionView._render_competitive_landscape(rankings_df)
+            PositionView._render_key_changes(rankings_df)
+
+            with st.expander("View Detailed Analysis", expanded=False):
+                selected_keywords = filters.keyword_selector(multiple=True)
+                selected_date_range = filters.date_range_selector()
+                
+                if selected_keywords:
+                    filtered_df = db_ops.get_ranking_data(
+                        keywords=selected_keywords,
+                        date_range=selected_date_range
+                    )
+                    
+                    st.subheader("Latest Rankings")
+                    PositionView._render_latest_rankings(filtered_df)
+                else:
+                    st.info("Select keywords above to see detailed rankings.")
+        else:
+            st.warning("No ranking data available for analysis.")
+
+    @staticmethod
+    def _render_summary_dashboard(df: pd.DataFrame):
         """Render summary metrics dashboard."""
         latest_date = df['check_date'].max()
         latest_data = df[df['check_date'] == latest_date]
@@ -449,7 +902,7 @@ class PositionView:
                 (df['domain'] == our_domain)
             ]
         
-        st.subheader(f"Rankings Summary - {latest_date}")
+        st.subheader(f"Rankings Summary - {latest_date.strftime('%Y-%m-%d')}")
         
         # Create metric rows
         col1, col2, col3, col4 = st.columns(4)
@@ -493,25 +946,9 @@ class PositionView:
                     st.metric("Average Position", f"{avg_position:.1f}")
             else:
                 st.metric("Average Position", "N/A")
-        
-        # Position range breakdown
-        st.subheader("Position Range Breakdown")
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            top_3 = len(our_rankings[our_rankings['position'] <= 3])
-            st.metric("Positions 1-3", top_3)
-        
-        with col2:
-            pos_4_5 = len(our_rankings[our_rankings['position'].between(4, 5)])
-            st.metric("Positions 4-5", pos_4_5)
-        
-        with col3:
-            pos_6_10 = len(our_rankings[our_rankings['position'].between(6, 10)])
-            st.metric("Positions 6-10", pos_6_10)
 
     @staticmethod
-    def _render_competitive_landscape(df):
+    def _render_competitive_landscape(df: pd.DataFrame):
         """Render competitive landscape analysis."""
         latest_date = df['check_date'].max()
         latest_data = df[df['check_date'] == latest_date]
@@ -562,152 +999,217 @@ class PositionView:
                     f"Pos: {row['position']:.1f}",
                     f"{row['keyword']} keywords"
                 )
-        
-        # Position range competition
-        st.subheader("Competition by Position Range")
-        
-        ranges = [(1,3), (4,5), (6,10)]
-        position_competition = []
-        
-        for start, end in ranges:
-            range_data = latest_data[latest_data['position'].between(start, end)]
-            domain_counts = range_data['domain'].value_counts()
-            
-            for domain, count in domain_counts.items():
-                position_competition.append({
-                    'range': f'Pos {start}-{end}',
-                    'domain': domain,
-                    'keywords': count
-                })
-        
-        competition_df = pd.DataFrame(position_competition)
-        
-        if not competition_df.empty:
-            fig = px.bar(
-                competition_df,
-                x='range',
-                y='keywords',
-                color='domain',
-                title="Domain Competition by Position Range",
-                barmode='group'
-            )
-            st.plotly_chart(fig, use_container_width=True)
 
     @staticmethod
-    def _render_position_trends(df):
+    def _render_position_trends(df: pd.DataFrame):
         """Render position trends chart."""
-        fig = charts.create_line_chart(
-            df[df['position'] <= 10],
-            x='check_date',
-            y='position',
-            color='domain',
-            title='Ranking Positions Over Time'
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    @staticmethod
-    def _render_latest_rankings(df):
-        """Render latest rankings table."""
-        latest_date = df['check_date'].max()
-        latest_rankings = df[
-            (df['check_date'] == latest_date) & 
-            (df['position'] <= 10)
-        ].copy()
-        
-        metrics.create_status_table(latest_rankings, {
-            "keyword": "Keyword",
-            "position": st.column_config.NumberColumn("Position", format="%d"),
-            "domain": "Domain",
-            "url": st.column_config.LinkColumn("URL")
-        })
-
-    @staticmethod
-    def render():
-        st.header("Search Position Tracking")
-        
-        # Get all ranking data for summary
-        # Get all keywords
-        all_keywords = db_ops.get_keywords()
-        # Get min and max dates from the database
-        start_date = datetime.now() - timedelta(days=90)  # Default to last 90 days
-        end_date = datetime.now()
-        
-        # Get all ranking data for summary
-        rankings_df = db_ops.get_ranking_data(all_keywords, start_date, end_date)
-        
-        # Render summary dashboard with all data
-        PositionView._render_summary_dashboard(rankings_df)
-
-        # Add competitive landscape
-        PositionView._render_competitive_landscape(rankings_df)
-        
-        st.markdown("---")  # Divider
-        
-        # Filtered view for trends and details
-        selected_keywords = filters.keyword_selector(multiple=True)
-        date_range = filters.date_range_selector()
-        
-        if selected_keywords:  # Only show filtered view if keywords selected
-            filtered_df = db_ops.get_ranking_data(selected_keywords, date_range[0], date_range[1])
+        if not df.empty:
+            fig = px.line(
+                df[df['position'] <= 10],
+                x='check_date',
+                y='position',
+                color='domain',
+                title='Ranking Positions Over Time'
+            )
             
-            st.subheader("Position Trends")
-            PositionView._render_position_trends(filtered_df)
+            fig.update_layout(
+                yaxis_title="Position",
+                yaxis_autorange="reversed",  # Lower position numbers at top
+                height=400
+            )
             
-            st.subheader("Latest Rankings")
-            PositionView._render_latest_rankings(filtered_df)
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Select keywords above to see detailed trends and rankings.")
+            st.info("No trend data available for the selected filters.")
 
-    # @staticmethod
-    # def render():
-    #     st.header("Search Position Tracking")
-        
-    #     # Filters
-    #     selected_keywords = filters.keyword_selector(multiple=True)
-    #     date_range = filters.date_range_selector()
-        
-    #     if not selected_keywords:
-    #         st.warning("Please select at least one keyword")
-    #         return
+    @staticmethod
+    def _render_latest_rankings(df: pd.DataFrame):
+        """Render latest rankings table."""
+        if not df.empty:
+            latest_date = df['check_date'].max()
+            latest_rankings = df[
+                (df['check_date'] == latest_date) & 
+                (df['position'] <= 10)
+            ].copy()
             
-    #     # Fetch and display ranking data
-    #     rankings_df = db_ops.get_ranking_data(selected_keywords, date_range[0], date_range[1])
-        
-    #     # Position Trends
-    #     st.subheader("Position Trends")
-    #     PositionView._render_position_trends(rankings_df)
-        
-    #     # Latest Rankings
-    #     st.subheader("Latest Rankings")
-    #     PositionView._render_latest_rankings(rankings_df)
+            if not latest_rankings.empty:
+                st.dataframe(
+                    latest_rankings,
+                    column_config={
+                        "keyword": st.column_config.TextColumn("Keyword"),
+                        "position": st.column_config.NumberColumn("Position", format="%d"),
+                        "domain": st.column_config.TextColumn("Domain"),
+                        "url": st.column_config.LinkColumn("URL")
+                    },
+                    hide_index=True
+                )
+            else:
+                st.info("No rankings in top 10 positions for the selected filters.")
+        else:
+            st.info("No ranking data available.")
 
-    # @staticmethod
-    # def _render_position_trends(df):
-    #     """Render position trends chart."""
-    #     fig = charts.create_line_chart(
-    #         df[df['position'] <= 10],
-    #         x='check_date',
-    #         y='position',
-    #         color='domain',
-    #         title='Ranking Positions Over Time'
-    #     )
-    #     st.plotly_chart(fig, use_container_width=True)
-
-    # @staticmethod
-    # def _render_latest_rankings(df):
-    #     """Render latest rankings table."""
-    #     latest_date = df['check_date'].max()
-    #     latest_rankings = df[
-    #         (df['check_date'] == latest_date) & 
-    #         (df['position'] <= 10)
-    #     ].copy()
+    @staticmethod
+    def _render_key_changes(df: pd.DataFrame):
+        """Render key changes and opportunities section."""
+        st.subheader("Key Changes & Opportunities")
         
-    #     metrics.create_status_table(latest_rankings, {
-    #         "keyword": "Keyword",
-    #         "position": st.column_config.NumberColumn("Position", format="%d"),
-    #         "domain": "Domain",
-    #         "url": st.column_config.LinkColumn("URL")
-    #     })
+        # Get last two dates for comparison
+        dates = sorted(df['check_date'].unique())
+        if len(dates) < 2:
+            st.warning("Not enough historical data for movement analysis")
+            return
+            
+        current_date = dates[-1]
+        previous_date = dates[-2]
+        
+        current_data = df[df['check_date'] == current_date]
+        previous_data = df[df['check_date'] == previous_date]
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            with st.container(border=True):
+                st.subheader("🎯 Biggest Movements", divider="gray")
+                
+                # Calculate position changes
+                changes = {}
+                for _, current in current_data[current_data['domain'] == 'atlan.com'].iterrows():
+                    prev = previous_data[
+                        (previous_data['keyword'] == current['keyword']) & 
+                        (previous_data['domain'] == 'atlan.com')
+                    ]
+                    if not prev.empty:
+                        change = prev.iloc[0]['position'] - current['position']
+                        changes[current['keyword']] = {
+                            'change': change,
+                            'current': current['position'],
+                            'previous': prev.iloc[0]['position']
+                        }
+                
+                # Show top improvements and drops
+                improvements = {k: v for k, v in changes.items() if v['change'] > 0}
+                drops = {k: v for k, v in changes.items() if v['change'] < 0}
+                
+                if improvements:
+                    st.markdown("**Top Improvements** 📈")
+                    for keyword, data in sorted(improvements.items(), 
+                                             key=lambda x: x[1]['change'], 
+                                             reverse=True)[:3]:
+                        st.metric(
+                            keyword,
+                            f"Position: {data['current']}",
+                            f"↑ {data['change']} spots",
+                            delta_color="normal"
+                        )
+                
+                if drops:
+                    st.markdown("**Biggest Drops** 📉")
+                    for keyword, data in sorted(drops.items(), 
+                                             key=lambda x: x[1]['change'])[:3]:
+                        st.metric(
+                            keyword,
+                            f"Position: {data['current']}",
+                            f"↓ {abs(data['change'])} spots",
+                            delta_color="inverse"
+                        )
+        
+        with col2:
+            with st.container(border=True):
+                st.subheader("🎲 Opportunities", divider="gray")
+                
+                # Find keywords where we're close to first page
+                near_first_page = current_data[
+                    (current_data['domain'] == 'atlan.com') &
+                    (current_data['position'].between(11, 15))
+                ]
+                
+                if not near_first_page.empty:
+                    st.markdown("**Near First Page** 🚀")
+                    for _, row in near_first_page.iterrows():
+                        st.metric(
+                            row['keyword'],
+                            f"Position: {row['position']}",
+                            "Close to first page!"
+                        )
+                
+                # Find competitor drops
+                competitor_drops = []
+                for domain in current_data['domain'].unique():
+                    if domain != 'atlan.com':
+                        domain_current = current_data[current_data['domain'] == domain]
+                        domain_previous = previous_data[previous_data['domain'] == domain]
+                        
+                        for _, current in domain_current.iterrows():
+                            prev = domain_previous[domain_previous['keyword'] == current['keyword']]
+                            if not prev.empty and current['position'] > prev.iloc[0]['position'] + 5:
+                                competitor_drops.append({
+                                    'keyword': current['keyword'],
+                                    'domain': domain,
+                                    'drop': current['position'] - prev.iloc[0]['position']
+                                })
+                
+                if competitor_drops:
+                    st.markdown("**Competitor Drops** 👀")
+                    for drop in sorted(competitor_drops, key=lambda x: x['drop'], reverse=True)[:3]:
+                        st.metric(
+                            f"{drop['keyword']} ({drop['domain']})",
+                            f"Dropped {drop['drop']} spots",
+                            "Opportunity!"
+                        )
+        
+        # Render ranking distribution heatmap
+        st.subheader("Ranking Distribution", divider="gray")
+        PositionView._render_ranking_heatmap(df[df['domain'] == 'atlan.com'])
+
+    @staticmethod
+    def _render_ranking_heatmap(df: pd.DataFrame):
+        """Render heatmap showing ranking distribution over time."""
+        if df.empty:
+            st.info("No ranking data available for heatmap")
+            return
+            
+        # Create position buckets: individual 1-10 and 10+
+        positions = list(range(1, 11))  # 1 through 10
+        position_labels = [str(i) for i in positions] + ['10+']
+        
+        # Prepare data for heatmap
+        heatmap_data = []
+        for date in sorted(df['check_date'].unique()):
+            date_data = df[df['check_date'] == date]
+            row = {'date': date.strftime('%Y-%m-%d')}
+            
+            # Count keywords at each position 1-10
+            for pos in positions:
+                row[str(pos)] = len(date_data[date_data['position'] == pos])
+            
+            # Count everything above position 10
+            row['10+'] = len(date_data[date_data['position'] > 10])
+            
+            heatmap_data.append(row)
+        
+        heatmap_df = pd.DataFrame(heatmap_data)
+        
+        # Create heatmap
+        fig = go.Figure(data=go.Heatmap(
+            z=heatmap_df[position_labels].values.T,
+            x=heatmap_df['date'],
+            y=position_labels,
+            colorscale='Blues',
+            text=heatmap_df[position_labels].values.T,
+            texttemplate="%{text}",
+            textfont={"size": 12},
+            hoverongaps=False
+        ))
+        
+        fig.update_layout(
+            title="Keyword Distribution by Position",
+            xaxis_title="Date",
+            yaxis_title="Position",
+            height=600,  # Increased height for better visibility of individual positions
+            yaxis_autorange='reversed'  # Put position 1 at the top
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
 
 class LLMView:
     @staticmethod

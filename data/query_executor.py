@@ -4,24 +4,22 @@ from typing import Dict, Any, Tuple
 import google.generativeai as genai
 import plotly.express as px
 import streamlit as st
-from seo_hub.core.config import config
-from seo_hub.data.vector_store import VectorStore
-from seo_hub.data.query_planner import QueryPlanner
-from seo_hub.data.schema_manager import SchemaManager
+from core.config import config
+
+from data.query_planner import QueryPlanner
+from data.schema_manager import SchemaManager
 
 class QueryExecutor:
     def __init__(self, rankings_db: str, urls_db: str, aimodels_db: str):
         self.rankings_db = rankings_db
         self.urls_db = urls_db
         self.aimodels_db = aimodels_db
-        self.vector_store = VectorStore()
         self.schema_manager = SchemaManager(
             rankings_db=rankings_db,
             urls_db=urls_db,
             aimodels_db=aimodels_db
         )
         self.query_planner = QueryPlanner(
-            vector_store=self.vector_store,
             schema_manager=self.schema_manager  # Pass schema_manager to QueryPlanner
         )
         

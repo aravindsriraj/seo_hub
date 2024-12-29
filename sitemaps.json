@@ -1,0 +1,54 @@
+{
+    "sitemaps": [
+        {
+            "url": "https://castordoc.com/sitemap.xml",
+            "name": "Castordoc",
+            "enabled": true
+        },
+        {
+            "url": "https://www.collibra.com/blog-sitemap.xml",
+            "name": "Collibra",
+            "enabled": true
+        },
+        {
+            "url":"https://data.world/marketing-sitemap.xml",
+            "name":"data.world",
+            "enabled": true
+        },
+        {
+            "url": "https://www.alation.com/post-sitemap.xml",
+            "name": "Alation",
+            "enabled": true
+        },
+        {
+            "url": "https://www.selectstar.com/sitemap.xml",
+            "name": "SelectStar",
+            "enabled": true
+        },
+        {
+            "url": "https://blog.datahubproject.io/sitemap/sitemap.xml",
+            "name": "DataHub",
+            "enabled": true
+        },
+        {
+            "url": "https://www.getcollate.io/sitemap.xml",
+            "name": "Collate",
+            "enabled": true
+        },
+        {
+            "url": "https://www.ovaledge.com/sitemap.xml",
+            "name": "Ovaledge",
+            "enabled": true
+        },
+        {
+            "url": "https://www.octopai.com/post-sitemap.xml",
+            "name": "Octopai",
+            "enabled": true
+        },
+        {
+            "url":"https://www.secoda.co/sitemap.xml",
+            "name":"Secoda",
+            "enabled":true
+        }
+    ]
+}

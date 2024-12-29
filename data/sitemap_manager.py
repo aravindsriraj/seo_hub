@@ -1,276 +1,194 @@
-from datetime import datetime, timedelta  
-from typing import Dict, List
-import time 
-from seo_hub.data.operations import db_ops
+from datetime import datetime
+import time
+from typing import Dict
 import streamlit as st
-from seo_hub.data.url_tracker_db import URLTrackerDB
-from seo_hub.data.web_scraper import WebScraper
-from seo_hub.data.xml_parser import extract_urls_from_xml
+from urllib.parse import urlparse
+from data.web_scraper import WebScraper
+from data.xml_parser import extract_urls_from_xml
+from data.operations import db_ops
 
 class SitemapManager:
     def __init__(self):
-        self.url_tracker = URLTrackerDB()
         self.web_scraper = WebScraper()
 
-    def process_sitemap(self, sitemap_url: str, status_container, start_time) -> Dict:
-        """Process a single sitemap with live status updates."""
+    @staticmethod
+    def get_processing_stats() -> Dict:
+        """Get current processing statistics"""
+        return db_ops.get_processing_stats()
+
+    
+    def _should_process_url(self, url: str, existing_data: Dict, options: Dict) -> bool:
+        """Determine if URL should be processed based on options."""
+        if options['force_update']:
+            return True
+
+        if not existing_data and options['new_urls']:
+            return True
+
+        if existing_data:
+            if existing_data.get('status') in ['date_not_found', 'error']:
+                return False
+
+            if options['missing_metadata'] and (
+                not existing_data.get('estimated_word_count') or
+                not existing_data.get('datePublished')
+            ):
+                return True
+
+            if options['updated_content'] and existing_data.get('dateModified'):
+                return True
+
+            if options['missing_enrichment'] and (
+                not existing_data.get('summary') or
+                not existing_data.get('category') or
+                not existing_data.get('primary_keyword')
+            ):
+                return True
+
+        return False
+
+    def _needs_enrichment(self, existing_data: Dict, options: Dict) -> bool:
+        """Determine if URL needs Gemini analysis."""
+        if options['force_update']:
+            return True
+
+        if not existing_data:
+            return True
+
+        if options['missing_enrichment'] and (
+            not existing_data.get('summary') or
+            not existing_data.get('category') or
+            not existing_data.get('primary_keyword')
+        ):
+            return True
+
+        return False
+    
+    def process_sitemap(self, sitemap_url: str, options: Dict, status_container) -> Dict:
+        """Process a sitemap based on selected options."""
         stats = {
-            'total_urls': 0,
+            'urls_processed': 0,
             'new_urls': 0,
             'updated_urls': 0,
             'errors': 0
         }
-        
+
         try:
             urls = extract_urls_from_xml(sitemap_url)
             if not urls:
+                print("⚠️ No URLs found in sitemap")
                 status_container.warning("⚠️ No URLs found in sitemap")
                 return stats
-            
-            stats['total_urls'] = len(urls)
+
+            stats['urls_processed'] = len(urls)
             progress_bar = st.progress(0)
             current_url = st.empty()
-            recent_updates = st.empty()
-            
-            # Process URLs with live updates
+
             for idx, url in enumerate(urls, 1):
                 try:
-                    # Update progress displays
                     progress = idx / len(urls)
                     progress_bar.progress(progress)
                     
-                    elapsed = timedelta(seconds=int(time.time() - start_time))
-                    current_url.markdown(f"""
-                    URLs Found: {len(urls)}
-                    ✓ Processed: {idx}/{len(urls)} URLs
-                    Current: {url}
-                    Time Elapsed: {elapsed}
-                    """)
+                    terminal_status = [f"\nProcessing URL {idx}/{len(urls)}: {url}"]
+                    ui_status = [f"Processing ({idx}/{len(urls)}): {url}"]
                     
-                    # Process URL with Gemini analysis and database updates
-                    result = self._process_single_url(url, sitemap_url)
-                    
-                    # Update stats based on result status
-                    if result['status'] == 'success':
-                        if result.get('is_new', False):
-                            stats['new_urls'] += 1
-                        else:
-                            stats['updated_urls'] += 1
+                    # Check existing data
+                    existing_data = db_ops.get_url_info(url)
+                    if existing_data:
+                        status = f"Existing URL - Last processed: {existing_data.get('last_analyzed', 'unknown')}"
+                        terminal_status.append(status)
+                        ui_status.append(status)
                     else:
-                        stats['errors'] += 1
-                        
-                    # Update recent stats
-                    recent_updates.markdown(f"""
-                    Recent Updates:
-                    ✓ Added: {stats['new_urls']} new URLs
-                    🔄 Updated: {stats['updated_urls']} existing URLs
-                    ⚠️ Errors: {stats['errors']} URLs
-                    """)
-                        
-                except Exception as e:
-                    stats['errors'] += 1
-                    st.error(f"❌ Error processing URL {url}: {str(e)}")
-                    continue
-            
-            return stats
-                
-        except Exception as e:
-            st.error(f"Error processing sitemap {sitemap_url}: {str(e)}")
-            return stats
-
-    def _process_single_url(self, url: str, sitemap_url: str) -> dict:
-        """Internal method to process a single URL."""
-        try:
-            # Extract content
-            metadata = self.web_scraper.extract_content(url)
-            if not metadata['content']:
-                return {'status': 'failed', 'error': 'No content extracted'}
-                
-            # Get Gemini analysis
-            analysis = self.web_scraper.analyze_with_gemini(metadata['content'], url)
-            
-            # Check if URL exists
-            is_new = not self._url_exists(url)
-            
-            # Update url_tracker.db
-            tracking_success = self.url_tracker.update_url(
-                url=url,
-                sitemap_url=sitemap_url,
-                word_count=metadata.get('estimated_word_count', 0),
-                date_published=metadata.get('date_published'),
-                date_modified=metadata.get('date_modified')
-            )
-            
-            # Update urls_analysis.db
-            if tracking_success:
-                analysis_insert = db_ops.insert_urls([(url, metadata['domain_name'])])
-                if analysis_insert is not None:
-                    analysis_success = db_ops.update_url_analysis(
-                        url_id=None,
-                        summary=analysis.get('summary', 'N/A'),
-                        category=analysis.get('category', 'Other'),
-                        primary_keyword=analysis.get('primary_keyword', 'N/A'),
-                        status='Processed'
-                    )
+                        status = "New URL"
+                        terminal_status.append(status)
+                        ui_status.append(status)
                     
-                    return {
-                        'status': 'success',
-                        'is_new': is_new,
-                        'tracking_update': True,
-                        'analysis_update': analysis_success
-                    }
-            
-            return {
-                'status': 'failed',
-                'error': 'Database update failed'
-            }
-            
+                    if self._should_process_url(url, existing_data, options):
+                        # Extract and process content
+                        metadata = self.web_scraper.extract_content(url)
+                        
+                        # Show what was found
+                        if metadata.get('datePublished'):
+                            msg = f"Published Date: {metadata['datePublished']}"
+                            terminal_status.append(msg)
+                            ui_status.append(msg)
+                        if metadata.get('dateModified'):
+                            msg = f"Modified Date: {metadata['dateModified']}"
+                            terminal_status.append(msg)
+                            ui_status.append(msg)
+                        if metadata.get('estimated_word_count'):
+                            msg = f"Word Count: {metadata['estimated_word_count']}"
+                            terminal_status.append(msg)
+                            ui_status.append(msg)
+
+                        metadata_to_save = {k: v for k, v in metadata.items() if k != 'status'}
+                        current_status = metadata.get('status', 'pending')
+                        
+                        # Update database
+                        success = db_ops.update_url(
+                            url=url,
+                            status=current_status,
+                            **metadata_to_save
+                        )
+                        
+                        if success:
+                            if existing_data:
+                                stats['updated_urls'] += 1
+                                # Create detailed update message
+                                updates = []
+                                if options['updated_content']:
+                                    if metadata.get('dateModified') != existing_data.get('dateModified'):
+                                        updates.append("content updated")
+                                if options['missing_metadata']:
+                                    if not existing_data.get('estimated_word_count'):
+                                        updates.append("added word count")
+                                    if not existing_data.get('datePublished'):
+                                        updates.append("added dates")
+                                if options['missing_enrichment']:
+                                    if not existing_data.get('summary'):
+                                        updates.append("added summary")
+                                    if not existing_data.get('category'):
+                                        updates.append("added category")
+                                
+                                update_msg = "✅ Updated: " + (", ".join(updates) if updates else "no changes needed")
+                            else:
+                                stats['new_urls'] += 1
+                                update_msg = "✅ New URL Added"
+                        else:
+                            stats['errors'] += 1
+                            update_msg = "❌ Update Failed"
+                        
+                        terminal_status.append(update_msg)
+                        ui_status.append(update_msg)
+                        
+                    else:
+                        reason = []
+                        if existing_data:
+                            if existing_data.get('status') in ['date_not_found', 'error']:
+                                reason.append("previous processing error")
+                            elif not options['force_update'] and not options['updated_content']:
+                                reason.append("no content update needed")
+                            elif not options['missing_metadata'] and not options['missing_enrichment']:
+                                reason.append("no enrichment needed")
+                        
+                        skip_msg = f"⏭️ Skipped - {', '.join(reason) if reason else 'no updates needed'}"
+                        terminal_status.append(skip_msg)
+                        ui_status.append(skip_msg)
+                    
+                    # Display status in both places
+                    print("\n".join(terminal_status))
+                    current_url.markdown("\n".join(ui_status))
+                    
+                except Exception as e:
+                    error_msg = f"❌ Error processing URL: {str(e)}"
+                    print(error_msg)
+                    stats['errors'] += 1
+                    current_url.error(error_msg)
+                    continue
+            return stats
+
         except Exception as e:
-            return {
-                'status': 'failed',
-                'error': str(e)
-            }
-
-    def _url_exists(self, url: str) -> bool:
-        """Check if URL exists in tracking database."""
-        info = self.url_tracker.get_url_info(url)
-        return info is not None
-
-    def _update_sitemap_status(self, sitemap_url: str, status: str):
-        """Update sitemap processing status."""
-        try:
-            self.url_tracker.update_sitemap_status(sitemap_url, status)
-        except Exception as e:
-            st.error(f"Error updating sitemap status: {str(e)}")
-
-    def get_sitemaps(self) -> List[Dict]:
-        """Get list of tracked sitemaps."""
-        return self.url_tracker.get_sitemaps()
-
-    def get_url_stats(self) -> str:
-        """Get current URL statistics from the database."""
-        try:
-            conn = sqlite3.connect(self.url_tracker.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT 
-                    COUNT(*) as total_urls,
-                    sitemap_url,
-                    MAX(last_checked) as last_update
-                FROM url_tracking
-                GROUP BY sitemap_url
-            """)
-            
-            stats = cursor.fetchall()
-            conn.close()
-            
-            if not stats:
-                return "No URLs found in database"
-            
-            results = ["**URL Counts by Sitemap:**"]
-            total_urls = 0
-            
-            for total, sitemap, last_update in stats:
-                total_urls += total
-                sitemap_name = sitemap.split('//')[-1]
-                results.append(f"- {sitemap_name}: {total:,} URLs")
-            
-            results.append(f"\n**Total URLs in Database:** {total_urls:,}")
-            results.append(f"**Last Update:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            
-            return "\n".join(results)
-            
-        except Exception as e:
-            return f"Error getting URL stats: {str(e)}"
-    
-    def process_all_sitemaps(self) -> List[Dict]:
-        """Process all tracked sitemaps and return stats."""
-        sitemaps = self.get_sitemaps()
-        results = []
-        
-        st.write("### Processing Sitemaps")
-        
-        for sitemap in sitemaps:
-            st.write(f"\n## Processing sitemap: {sitemap['sitemap_url']}")
-            stats = self.process_sitemap(sitemap['sitemap_url'])
-            results.append({
-                'sitemap_url': sitemap['sitemap_url'],
-                'stats': stats
-            })
-        
-        return results
-
-    def parse_sitemap(self, sitemap_url: str) -> List[str]:
-        """Parse sitemap and return list of URLs."""
-        return extract_urls_from_xml(sitemap_url)
-    
-    def process_url(self, url: str, sitemap_url: str) -> dict:
-        """Process URL with complete flow including analysis."""
-        try:
-            print("\nBEGINNING URL PROCESSING")
-            print(f"URL: {url}")
-            print(f"Sitemap: {sitemap_url}")
-            
-            # Step 1: Extract content
-            print("\nStep 1: Extracting content")
-            metadata = self.web_scraper.extract_content(url)
-            
-            if not metadata['content']:
-                print("No content extracted")
-                return {
-                    'status': 'failed',
-                    'details': 'No content could be extracted'
-                }
-            
-            print("Content extracted successfully")
-            print(f"Word count: {metadata.get('estimated_word_count')}")
-            
-            # Step 2: Check if URL exists in url_tracking
-            existing_data = self.url_tracker.get_url_info(url)
-            print(f"\nStep 2: URL exists in tracker: {existing_data is not None}")
-            
-            # Step 3: Get Gemini analysis
-            print("\nStep 3: Getting Gemini analysis")
-            analysis = self.web_scraper.analyze_with_gemini(metadata['content'], url)
-            print("Analysis completed:", analysis)
-            
-            # Step 4: Update databases
-            print("\nStep 4: Updating databases")
-            
-            # Update url_tracker.db
-            print("Updating URL tracker...")
-            tracking_success = self.url_tracker.update_url(
-                url=url,
-                sitemap_url=sitemap_url,
-                word_count=metadata.get('estimated_word_count', 0),
-                date_published=metadata.get('date_published'),
-                date_modified=metadata.get('date_modified')
-            )
-            print(f"Tracker update: {'Success' if tracking_success else 'Failed'}")
-            
-            # Update urls_analysis.db
-            print("\nUpdating analysis database...")
-            analysis_insert = db_ops.insert_urls([(url, metadata['domain_name'])])
-            if analysis_insert:
-                analysis_success = db_ops.update_url_analysis(
-                    url_id=None,  # Let it find the latest inserted ID
-                    summary=analysis.get('summary', 'N/A'),
-                    category=analysis.get('category', 'Other'),
-                    primary_keyword=analysis.get('primary_keyword', 'N/A'),
-                    status='Processed'
-                )
-                print(f"Analysis update: {'Success' if analysis_success else 'Failed'}")
-            
-            return {
-                'status': 'success',
-                'tracking_update': tracking_success,
-                'analysis_update': analysis_success if analysis_insert else False
-            }
-            
-        except Exception as e:
-            print(f"Error in process_url: {str(e)}")
-            return {
-                'status': 'failed',
-                'error': str(e)
-            }
+            error_msg = f"Error processing sitemap: {str(e)}"
+            print(error_msg)
+            status_container.error(error_msg)
+        return stats

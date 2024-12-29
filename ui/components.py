@@ -1,12 +1,12 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from typing import List, Dict, Any, Union, Tuple
 from datetime import datetime, timedelta
-from seo_hub.core.config import config
-from seo_hub.data.operations import db_ops
+from core.config import config
+from data.operations import db_ops
+from contextlib import contextmanager
 
 class MetricsDisplay:
     """Handles the display of key metrics and statistics."""
@@ -271,9 +271,70 @@ class TableComponents:
         return df.iloc[start_idx:end_idx]
     pass
 
+@contextmanager
+def progress_container():
+    """Create a container for progress tracking."""
+    container = st.empty()
+    try:
+        yield container
+    finally:
+        container.empty()
+
+class ProgressTracker:
+    def __init__(self):
+        self.progress_bar = None
+        self.status_text = None
+        self.stats_container = None
+    
+    def setup(self):
+        """Set up progress tracking components."""
+        self.progress_bar = st.progress(0)
+        self.status_text = st.empty()
+        self.stats_container = st.empty()
+        return self
+    
+    def initialize_progress(self):  # Changed back to initialize_progress to match existing code
+        """Initialize progress tracking components."""
+        self.progress_bar = st.progress(0)
+        self.status_text = st.empty()
+        self.stats_container = st.empty()
+        return self
+
+    def update(self, progress: float, status: str, stats: dict):
+        """Update progress display."""
+        if self.progress_bar:
+            self.progress_bar.progress(progress)
+        if self.status_text:
+            self.status_text.text(status)
+        if self.stats_container and stats:
+            self.stats_container.markdown(f"""
+            Current Statistics:
+            - Processed: {stats.get('processed', 0)}
+            - New: {stats.get('new', 0)}
+            - Updated: {stats.get('updated', 0)}
+            - Errors: {stats.get('errors', 0)}
+            """)
+    
+    def clear(self):
+        """Clear all progress displays."""
+        if self.progress_bar:
+            self.progress_bar.empty()
+        if self.status_text:
+            self.status_text.empty()
+        if self.stats_container:
+            self.stats_container.empty()
+
+    def __enter__(self):
+        """Initialize when entering context."""
+        return self.setup()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Clean up when exiting context."""
+        self.clear()
+
 # Create global instances of components
 metrics = MetricsDisplay()
 charts = ChartComponents()
 filters = FilterComponents()
-progress = ProgressComponents()
+progress = ProgressTracker()
 tables = TableComponents()

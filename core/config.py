@@ -40,7 +40,7 @@ class Config:
         genai.configure(api_key=self.GEMINI_API_KEY)
         
         self.GENERATION_CONFIG = {
-            "temperature": 1,
+            "temperature": 0,
             "top_p": 0.95,
             "top_k": 40,
             "max_output_tokens": 8192,

@@ -1,11 +1,12 @@
 import streamlit as st
-from seo_hub.core.config import config
-from seo_hub.data.operations import db_ops
-from seo_hub.ui.views import views
-from seo_hub.ui.components import metrics, progress
-from seo_hub.ui.qa_view import QAView
-from seo_hub.ui.sitemap_view import SitemapView
-from seo_hub.ui.seo_qa_view import SEOQAView
+from core.config import config
+from core.services import content_processor, url_service
+from data.operations import db_ops
+from ui.views import views
+from ui.components import progress
+from ui.qa_view import QAView
+from ui.sitemap_view import SitemapView
+from ui.seo_qa_view import SEOQAView
 
 def initialize_app():
     """Initialize the application and database connections."""
@@ -14,6 +15,7 @@ def initialize_app():
     st.set_page_config(**st_config)
     
     # Initialize databases
+    # Ensure URLs database is set up before proceeding. If setup fails, stop the app.
     if not db_ops.setup_urls_database():
         st.stop()
 
@@ -34,45 +36,33 @@ def setup_sidebar():
             )
 
         # Analysis Controls
-        with st.expander("Analysis Controls", expanded=False):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                if st.button("Reset Analysis", use_container_width=True):
-                    db_ops.reset_database()
-                    st.success("Analysis reset. Status set to 'Pending'.")
-
-            with col2:
-                if st.button("Reset Status", use_container_width=True):
-                    db_ops.reset_status()
-                    st.success("All statuses have been reset to 'Pending'.")
-
-            # New row
-            col3, col4 = st.columns(2)
-            with col3:
-                if st.button("Analyze URLs", use_container_width=True):
-                    content_processor.process_pending_urls()
+        # with st.expander("Analysis Controls", expanded=False):
+        #     # New row
+        #     col3, col4 = st.columns(2)
+        #     with col3:
+        #         if st.button("Analyze URLs", use_container_width=True):
+        #             content_processor.process_pending_urls()
 
         # Database Controls
-        with st.expander("Database Controls", expanded=False):
-            # Add Column
-            new_column_name = st.text_input("Add New Column Name")
-            if st.button("Add Column"):
-                if new_column_name:
-                    db_ops.add_column('urls', new_column_name)
-                    st.success(f"Column '{new_column_name}' added successfully.")
-                else:
-                    st.error("Please enter a valid column name.")
+        # with st.expander("Database Controls", expanded=False):
+        #     # Add Column
+        #     new_column_name = st.text_input("Add New Column Name")
+        #     if st.button("Add Column"):
+        #         if new_column_name:
+        #             db_ops.add_column('urls', new_column_name)
+        #             st.success(f"Column '{new_column_name}' added successfully.")
+        #         else:
+        #             st.error("Please enter a valid column name.")
 
-            # Drop Column
-            columns = db_ops.get_column_names('urls', config.URLS_DB_PATH)
-            column_to_drop = st.selectbox("Select Column to Drop", columns)
-            if st.button("Drop Column"):
-                try:
-                    db_ops.drop_column('urls', column_to_drop)
-                    st.success(f"Column '{column_to_drop}' dropped successfully.")
-                except ValueError as e:
-                    st.error(str(e))
+        #     # Drop Column
+        #     columns = db_ops.get_column_names('urls', config.URLS_DB_PATH)
+        #     column_to_drop = st.selectbox("Select Column to Drop", columns)
+        #     if st.button("Drop Column"):
+        #         try:
+        #             db_ops.drop_column('urls', column_to_drop)
+        #             st.success(f"Column '{column_to_drop}' dropped successfully.")
+        #         except ValueError as e:
+        #             st.error(str(e))
 
         # Settings
         with st.expander("Settings", expanded=False):

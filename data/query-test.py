@@ -1,7 +1,7 @@
-from seo_hub.data.vector_store import VectorStore
-from seo_hub.data.query_planner import QueryPlanner
-from seo_hub.data.query_executor import QueryExecutor
-from seo_hub.core.config import config
+from data.vector_store import VectorStore
+from data.query_planner import QueryPlanner
+from data.query_executor import QueryExecutor
+from core.config import config
 
 # Initialize
 store = VectorStore()

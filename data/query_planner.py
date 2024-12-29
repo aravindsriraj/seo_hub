@@ -1,12 +1,12 @@
 import google.generativeai as genai
 from typing import Dict, Any
-from seo_hub.core.config import config
-from seo_hub.data.vector_store import VectorStore
-from seo_hub.data.schema_manager import SchemaManager
+from core.config import config
+
+from data.schema_manager import SchemaManager
 
 class QueryPlanner:
-    def __init__(self, vector_store: VectorStore, schema_manager: SchemaManager):
-        self.vector_store = vector_store
+    def __init__(self, schema_manager: SchemaManager):
+
         self.schema_manager = schema_manager
         genai.configure(api_key=config.GEMINI_API_KEY)
         self.model = genai.GenerativeModel(
@@ -32,7 +32,6 @@ class QueryPlanner:
         """Create an execution plan with proper database context."""
         schema = self.schema_manager.get_schema()
         query_context = self.schema_manager.get_query_context()
-        context = self.vector_store.query_similar(user_question)
         
         prompt = f"""
         You are an SEO analysis expert. Create an SQL query plan for this question.
@@ -55,8 +54,7 @@ class QueryPlanner:
         Query Guidelines:
         {query_context}
 
-        SQL Patterns for reference:
-        {self._format_patterns(context['patterns'])}
+
 
         Respond with a JSON-like structure containing:
         {{

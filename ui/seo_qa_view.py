@@ -1,6 +1,6 @@
 import streamlit as st
-from seo_hub.data.query_executor import QueryExecutor
-from seo_hub.core.config import config
+from data.query_executor import QueryExecutor
+from core.config import config
 
 
 class SEOQAView:

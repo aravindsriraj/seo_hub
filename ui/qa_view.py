@@ -1,6 +1,6 @@
 import streamlit as st
 from typing import List, Dict, Any
-from seo_hub.analysis.engine import CompetitiveAnalysisEngine
+from analysis.engine import CompetitiveAnalysisEngine
 
 class QAView:
     @staticmethod
